@@ -52,7 +52,7 @@ def cleaning(data, dropNonNCBI=False):
         else:
             to_node[a.source_taxon_name]=[a]
 
-    to_node_pat={}
+    to_node_target={}
     for i,a in df_tan[[
         'target_taxon_external_id',
         'target_taxon_name',
@@ -60,14 +60,14 @@ def cleaning(data, dropNonNCBI=False):
         'target_taxon_path_ids',
         'target_taxon_path_ranks',
     ]].drop_duplicates().iterrows():
-        if a.target_taxon_name in to_node_pat:
+        if a.target_taxon_name in to_node_target:
             #utamakan NCBI
             if 'NCBI' in a['target_taxon_external_id']:
-                to_node_pat[a.target_taxon_name][0]=a
+                to_node_target[a.target_taxon_name][0]=a
             else:
-                to_node_pat[a.target_taxon_name].append(a)
+                to_node_target[a.target_taxon_name].append(a)
         else:
-            to_node_pat[a.target_taxon_name]=[a]
+            to_node_target[a.target_taxon_name]=[a]
 
 
     #source : update duplikasi dengan nilai pertama
@@ -98,7 +98,7 @@ def cleaning(data, dropNonNCBI=False):
         'target_taxon_path',
         'target_taxon_path_ids',
         'target_taxon_path_ranks',
-       ]].apply(lambda x: to_node_pat[x.target_taxon_name][0], axis=1)
+       ]].apply(lambda x: to_node_target[x.target_taxon_name][0], axis=1)
 
     #masih ada duplikasi, jadi hapus
     print('drop duplicate nama sama beda id')

@@ -57,11 +57,22 @@ def buat_kamus_kosong(df_node):
     masking = ((df_node["taxon_id"].str.contains("NCBI") == False) & (df_node['taxon_id'].isnull()==False))
 
     #kamus berdasarkan database biodiversity pada seluruh dataframe
+    # untuk taxon_id
     kamus_ncbi={ a.taxon_id.split(':')[0]:{} for i,a in df_node[masking].iterrows() if a.taxon_id != ""}
-    kamus_ncbi={ a.split(':')[0]:{} for idx,data in df_node[masking].iterrows() for a in data.taxon_path_ids.replace(" ","").split('|') if a!="" }
+    # untuk taxon_path_ids
+    for idx,data in df_node[masking].iterrows():
+        for a in data.taxon_path_ids.replace(" ","").split('|'):
+            if a!="":
+                kamus_ncbi[a.split(':')[0]]={}
+        # versi comprehension tapi malah menimpa
+        # kamus_ncbi={ a.split(':')[0]:{} for idx,data in df_node[masking].iterrows() for a in data.taxon_path_ids.replace(" ","").split('|') if a!="" }
 
     #{ db:{ kode:arti } }
     for idx,data in df_node[masking].iterrows():
+        # untuk taxon_id
+        i = data.taxon_id
+        kamus_ncbi[i.split(':')[0]][i]=''
+        # untuk taxon_path_ids
         for i in data.taxon_path_ids.replace(" ","").split('|'):
             if i != '':
                 kamus_ncbi[i.split(':')[0]][i]=''
@@ -124,7 +135,10 @@ def update_kamus_pake_wikidata(kamus_ncbi):
 
 def update_df_pake_kamus(kamus_ncbi,df_node,df_edge,printOutput=False):
     # masking bukan NCBI dan null 
-    masking = ((df_node["taxon_id"].str.contains("NCBI") == False) & (df_node['taxon_id'].isnull()==False))
+    masking = (
+        (df_node["taxon_id"].str.contains("NCBI") == False) & 
+        (df_node['taxon_id'].isnull()==False)
+    )
     masking_path_ids = (
         (df_node["taxon_path_ids"].str.contains("NCBI") == False) & 
         (df_node['taxon_path_ids'].isnull() == False)

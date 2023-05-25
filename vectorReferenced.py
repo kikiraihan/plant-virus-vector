@@ -1,4 +1,4 @@
-from standardization import getTaxonomy
+from standardization_usingsparql import getTaxonomy
 from SPARQLWrapper import SPARQLWrapper
 import requests
 
@@ -12,7 +12,7 @@ def call_wiki_api(item):
   except:
     return False
 
-def cek_vector_wiki_id(acuan_):    
+def cek_ncbi_id_by_wiki_id_via_string(acuan_):    
     id_=call_wiki_api(acuan_)
     if not id_:
         return False
@@ -53,8 +53,8 @@ def cek_vector_wiki_id(acuan_):
 
 
 # untuk vector
-def get_taxon_vector(acuan_, obo):
-    cek = cek_vector_wiki_id(acuan_) #(Aphididae, family, NCBI:27482)
+def get_taxon_vector(acuan_, endpoint_url):
+    cek = cek_ncbi_id_by_wiki_id_via_string(acuan_) #(Aphididae, family, NCBI:27482)
     if not cek:
         return False
 
@@ -70,7 +70,7 @@ def get_taxon_vector(acuan_, obo):
         'species':'spesies'
     }
     data=[]
-    for nama,rank,kode in getTaxonomy(cek[2],obo):
+    for nama,rank,kode in getTaxonomy(cek[2],endpoint_url):
         #nama=nama.replace(" ","-")
         if rank in ['superkingdom','kingdom','phylum','class','order','family','genus','species']:
             data.append((taxon_dict[rank],kode+'_'+nama)) #('family', 'NCBI:27482_Aphididae')

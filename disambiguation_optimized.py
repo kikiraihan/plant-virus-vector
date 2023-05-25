@@ -1,6 +1,57 @@
 from SPARQLWrapper import SPARQLWrapper
 from tqdm import tqdm
 
+def __query_text(join_ids_text, pred):
+    if(pred=='iniwd'):
+        join_ids_text = join_ids_text.replace("('", "(wd:").replace("')", ")")
+        query="""
+        SELECT ?id ?ncbiLabel ?patogenLabel ?rankLabel
+        WHERE {
+            VALUES (?entity) { """+join_ids_text+""" } 
+            ?entity wdt:P105 ?rank.
+            ?entity wdt:P685 ?ncbi.
+            ?entity wdt:P225 ?patogen.
+            BIND(REPLACE(STR(?entity), ".*Q", "Q") AS ?id) 
+
+            SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
+        }
+        """
+    else:  
+        query="""
+        SELECT ?id ?ncbiLabel ?patogenLabel ?rankLabel
+        WHERE {
+            VALUES (?id) { """+join_ids_text+""" }
+            ?patogen """+pred+""" ?id.
+            ?patogen wdt:P105 ?rank.
+            OPTIONAL{?patogen wdt:P685 ?ncbi}.
+
+            SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
+        }
+        """
+    return query.replace("\n"," ").strip().replace("  ","")
+
+def __querying(endpoint_url,query,format_):
+    spw=SPARQLWrapper(endpoint_url)
+    spw.setQuery(query)
+    spw.setReturnFormat(format_)
+    hasil=spw.query().convert()
+    return hasil
+
+def __updating(hasil,group,kamus_ncbi):
+    #update kamus
+    for i in tqdm(hasil['results']['bindings']):
+        key = group + ':' + i['id']['value']
+        if('ncbiLabel' in i):
+            kamus_ncbi[group][key] = "NCBI:"+i['ncbiLabel']['value']
+    
+    return kamus_ncbi
+
+def __chunk_list(lst, chunk_size):
+    # my_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    # print(__chunk_list(my_list, 3))
+    # [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10]]
+    return [lst[i:i + chunk_size] for i in range(0, len(lst), chunk_size)]
+
 def buat_kamus_kosong(df_node):
     # masking bukan NCBI dan null 
     masking = ((df_node["taxon_id"].str.contains("NCBI") == False) & (df_node['taxon_id'].isnull()==False))
@@ -17,20 +68,6 @@ def buat_kamus_kosong(df_node):
     
     return kamus_ncbi
 
-def query_text(join_ids_text, pred):
-    query="""
-    SELECT ?id ?ncbiLabel ?patogenLabel ?rankLabel
-    WHERE {
-        VALUES (?id) { """+join_ids_text+""" }
-        ?patogen """+pred+""" ?id.
-        ?patogen wdt:P105 ?rank.
-        OPTIONAL{?patogen wdt:P685 ?ncbi}.
-
-        SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
-    }
-    """
-    return query.replace("\n"," ").strip().replace("  ","")
-
 def update_kamus_pake_wikidata(kamus_ncbi):
     pred={
         'GBIF':'wdt:P846',
@@ -41,7 +78,7 @@ def update_kamus_pake_wikidata(kamus_ncbi):
         'INAT_TAXON':'wdt:P3151',
         'IRMNG':'wdt:P5055',
         'NBN':'wdt:P3240',
-        'WD':'',
+        'WD':'iniwd',
         }
     format_='json'
     endpoint_url='https://query.wikidata.org/sparql'
@@ -49,43 +86,41 @@ def update_kamus_pake_wikidata(kamus_ncbi):
     # looping
     print(list(kamus_ncbi), len(kamus_ncbi),' database, ', len(kamus_ncbi),' kali perulangan akses NCBI')
     for group in list(kamus_ncbi):
+
+        if group not in pred:
+            print(group,': tidak diketahui predikatnya')
+            continue
+
         ids = ' '.join(["('"+i.split(":")[1]+"')" for i in list(kamus_ncbi[group])])
-        query = query_text(ids, pred[group])
+        query = __query_text(ids, pred[group])
         
-        # kalau query lebih kecil dari 2000 lengthnya
-        print(len(query))
-        if len(query) < 1000:
-            #querying
-            spw=SPARQLWrapper(endpoint_url)
-            spw.setQuery(query)
-            spw.setReturnFormat(format_)
-            hasil=spw.query().convert()
+        # kalau len <=130
+        print(group,': jumlah id',len(kamus_ncbi[group])) # print(len(query))
+        if len(kamus_ncbi[group]) <= 130:
+            hasil = __querying(endpoint_url,query,format_)
             # skip kalo kosong
             if(not hasil['results']['bindings']):
                 continue
-            #update kamus
-            for i in tqdm(hasil['results']['bindings']):
-                key = group + ':' + i['id']['value']
-                if('ncbiLabel' in i):
-                    kamus_ncbi[group][key] = "NCBI:"+i['ncbiLabel']['value']
+            kamus_ncbi = __updating(hasil,group,kamus_ncbi)
         
-        # kalau query lebih kecil dari 2000 lengthnya
+        # kalau len > 130
         else:
-            cek = handle_pake_chunk(kamus_ncbi,pred,group)
-            if not cek :
-                continue
-            else :
-                kamus_ncbi = cek
+            print(group, ': query terlalu panjang, dilakukan chunk')
+            for list_chunk in __chunk_list(list(kamus_ncbi[group]), 130):
+                ids = ' '.join(["('"+i.split(":")[1]+"')" for i in list_chunk])
+                query = __query_text(ids, pred[group])
+
+                #querying
+                hasil = __querying(endpoint_url,query,format_)
+                # skip kalo kosong
+                if(not hasil['results']['bindings']):
+                    continue
+                kamus_ncbi = __updating(hasil,group,kamus_ncbi)
 
     return kamus_ncbi
 
-def handle_pake_chunk(kamus_ncbi,pred,group):
-    print(group, ' query terlalu panjang, skip')
-    #querying 
-    # skip kalo kosong
-    # update kamus
-    return False
-    # return kamus_ncbi
+
+
 
 def update_df_pake_kamus(kamus_ncbi,df_node,df_edge,printOutput=False):
     # masking bukan NCBI dan null 
@@ -173,3 +208,23 @@ def update_df_pake_path_ujung(df_node, df_edge,printOutput=False):
     return df_node,df_edge
 
 
+def removeOtherThanNCBI(node,edge):
+    #Cek apakah masih ada selain NCBI?
+    print({a.taxon_id.split(':')[0] for i,a in node[node["taxon_id"].str.contains("NCBI") == False].iterrows()})
+    print('------------------------------------')
+
+    #preview yang dihapus selain NCBI
+    print('node')
+    print('sebelum ', len(node))
+    print('sesudah ', len(node) - len(node[node["taxon_id"].str.contains("NCBI") == False]))
+    print('edge')
+    print('target: sebelum', len(edge))
+    print('target: sesudah', len(edge)- len(edge[edge["target_taxon_id"].str.contains("NCBI") == False]))
+    print('source: sebelum', len(edge))
+    print('source: sesudah', len(edge)- len(edge[edge["source_taxon_id"].str.contains("NCBI") == False]))
+    #drop selain NCBI
+    node = node[node["taxon_id"].str.contains("NCBI")]
+    edge = edge[edge["target_taxon_id"].str.contains("NCBI")]
+    edge = edge[edge["source_taxon_id"].str.contains("NCBI")]
+
+    return (node,edge)

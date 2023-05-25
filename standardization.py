@@ -67,7 +67,7 @@ def buat_kolom_taxon_awal(df_node):
     
     #isi kolom taxon, pake data yang ada
     for idx, data in df_node.iterrows():
-        if pd.isnull(data.taxon_path):
+        if pd.isnull(data.taxon_path) | pd.isnull(data.taxon_path_ids) | pd.isnull(data.taxon_path_rank) :
             continue
         taxon_path = data.taxon_path.replace(' ','').split('|')
         taxon_path_ids = data.taxon_path_ids.replace(' ','').split('|')

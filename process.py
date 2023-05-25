@@ -209,7 +209,7 @@ def nx_to_pyviz(gnx):
 
 
 
-def allProcess(data_, acuan_, obo, bobot_dc=1, bobot_ed=1):
+def allProcess(data_, acuan_, endpoint_url, bobot_dc=1, bobot_ed=1):
     #1
     #baca data
     print('#1 Baca data interaksi')
@@ -243,7 +243,7 @@ def allProcess(data_, acuan_, obo, bobot_dc=1, bobot_ed=1):
     #5
     # data acuan
     print('#5 ambil data acuan')
-    data_acuan=get_taxon_vector(acuan_,obo)
+    data_acuan=get_taxon_vector(acuan_,endpoint_url)
 
     #6
     #konversi node networkx ke RDF

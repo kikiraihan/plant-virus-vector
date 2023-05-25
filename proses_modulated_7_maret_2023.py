@@ -17,7 +17,7 @@ import os
 import networkx as nx
 import matplotlib.pyplot as plt
 
-from vectorReferenced import get_taxon_vector,cek_ncbi_id_by_wiki_id
+from vectorReferenced import get_taxon_vector,cek_ncbi_id_by_wiki_id_via_string
 
 
 data=[
@@ -135,7 +135,7 @@ for each in data:
         return counter
 
     # tandai virus utama
-    search_virus,taxon_,ncbi_id_=cek_ncbi_id_by_wiki_id(search_)
+    search_virus,taxon_,ncbi_id_=cek_ncbi_id_by_wiki_id_via_string(search_)
     print("keyword virus utama: ",(search_virus,taxon_,ncbi_id_))
     df_node.loc[df_node[taxon_].str.contains(search_virus), ['virus_utama']] = True
 

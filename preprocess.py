@@ -35,76 +35,76 @@ def cleaning(data, dropNonNCBI=False):
     # MODIF
     # BERSIHKAN DUPLIKASI PER NAMA TAPI BEDA ID.
     #semua nama duplikat, di kumpulkan datanya per nama.
-    to_node={}
-    for i,a in df_tan[[
-        'source_taxon_external_id',
-        'source_taxon_name',
-        'source_taxon_path',
-        'source_taxon_path_ids',
-        'source_taxon_path_ranks',
-    ]].drop_duplicates().iterrows():
-        if a.source_taxon_name in to_node:
-            #utamakan NCBI
-            if 'NCBI' in a['source_taxon_external_id']:
-                to_node[a.source_taxon_name][0]=a
-            else:
-                to_node[a.source_taxon_name].append(a)
-        else:
-            to_node[a.source_taxon_name]=[a]
+    # to_node={}
+    # for i,a in df_tan[[
+    #     'source_taxon_external_id',
+    #     'source_taxon_name',
+    #     'source_taxon_path',
+    #     'source_taxon_path_ids',
+    #     'source_taxon_path_ranks',
+    # ]].drop_duplicates().iterrows():
+    #     if a.source_taxon_name in to_node:
+    #         #utamakan NCBI
+    #         if 'NCBI' in a['source_taxon_external_id']:
+    #             to_node[a.source_taxon_name][0]=a
+    #         else:
+    #             to_node[a.source_taxon_name].append(a)
+    #     else:
+    #         to_node[a.source_taxon_name]=[a]
 
-    to_node_target={}
-    for i,a in df_tan[[
-        'target_taxon_external_id',
-        'target_taxon_name',
-        'target_taxon_path',
-        'target_taxon_path_ids',
-        'target_taxon_path_ranks',
-    ]].drop_duplicates().iterrows():
-        if a.target_taxon_name in to_node_target:
-            #utamakan NCBI
-            if 'NCBI' in a['target_taxon_external_id']:
-                to_node_target[a.target_taxon_name][0]=a
-            else:
-                to_node_target[a.target_taxon_name].append(a)
-        else:
-            to_node_target[a.target_taxon_name]=[a]
+    # to_node_target={}
+    # for i,a in df_tan[[
+    #     'target_taxon_external_id',
+    #     'target_taxon_name',
+    #     'target_taxon_path',
+    #     'target_taxon_path_ids',
+    #     'target_taxon_path_ranks',
+    # ]].drop_duplicates().iterrows():
+    #     if a.target_taxon_name in to_node_target:
+    #         #utamakan NCBI
+    #         if 'NCBI' in a['target_taxon_external_id']:
+    #             to_node_target[a.target_taxon_name][0]=a
+    #         else:
+    #             to_node_target[a.target_taxon_name].append(a)
+    #     else:
+    #         to_node_target[a.target_taxon_name]=[a]
 
 
-    #source : update duplikasi dengan nilai pertama
-    df_tan[[
-        'source_taxon_external_id',
-        'source_taxon_name',
-        'source_taxon_path',
-        'source_taxon_path_ids',
-        'source_taxon_path_ranks',
-       ]]=df_tan[[
-        'source_taxon_external_id',
-        'source_taxon_name',
-        'source_taxon_path',
-        'source_taxon_path_ids',
-        'source_taxon_path_ranks',
-       ]].apply(lambda x: to_node[x.source_taxon_name][0], axis=1)
+    # #source : update duplikasi dengan nilai pertama
+    # df_tan[[
+    #     'source_taxon_external_id',
+    #     'source_taxon_name',
+    #     'source_taxon_path',
+    #     'source_taxon_path_ids',
+    #     'source_taxon_path_ranks',
+    #    ]]=df_tan[[
+    #     'source_taxon_external_id',
+    #     'source_taxon_name',
+    #     'source_taxon_path',
+    #     'source_taxon_path_ids',
+    #     'source_taxon_path_ranks',
+    #    ]].apply(lambda x: to_node[x.source_taxon_name][0], axis=1)
 
-    #target : update duplikasi dengan nilai pertama
-    df_tan[[
-        'target_taxon_external_id',
-        'target_taxon_name',
-        'target_taxon_path',
-        'target_taxon_path_ids',
-        'target_taxon_path_ranks',
-       ]]=df_tan[[
-        'target_taxon_external_id',
-        'target_taxon_name',
-        'target_taxon_path',
-        'target_taxon_path_ids',
-        'target_taxon_path_ranks',
-       ]].apply(lambda x: to_node_target[x.target_taxon_name][0], axis=1)
+    # #target : update duplikasi dengan nilai pertama
+    # df_tan[[
+    #     'target_taxon_external_id',
+    #     'target_taxon_name',
+    #     'target_taxon_path',
+    #     'target_taxon_path_ids',
+    #     'target_taxon_path_ranks',
+    #    ]]=df_tan[[
+    #     'target_taxon_external_id',
+    #     'target_taxon_name',
+    #     'target_taxon_path',
+    #     'target_taxon_path_ids',
+    #     'target_taxon_path_ranks',
+    #    ]].apply(lambda x: to_node_target[x.target_taxon_name][0], axis=1)
 
-    #masih ada duplikasi, jadi hapus
-    print('drop duplicate nama sama beda id')
-    print('sebelum : ',len(df_tan))
-    df_tan.drop_duplicates(inplace=True)
-    print('setelah: ', len(df_tan))
+    # #masih ada duplikasi, jadi hapus
+    # print('drop duplicate nama sama beda id')
+    # print('sebelum : ',len(df_tan))
+    # df_tan.drop_duplicates(inplace=True)
+    # print('setelah: ', len(df_tan))
 
     #reset index
     df_tan = df_tan.reset_index(drop=True)

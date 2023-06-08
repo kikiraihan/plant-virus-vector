@@ -14,7 +14,7 @@ import os
 import networkx as nx
 import matplotlib.pyplot as plt
 
-from vectorReferenced import get_taxon_vector
+from modul.vectorReferenced import get_taxon_vector
 
 
 def dataframeToNetworkxGraph(df_node,df_edge):

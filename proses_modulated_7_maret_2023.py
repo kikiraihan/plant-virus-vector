@@ -1,3 +1,4 @@
+
 from tqdm import tqdm
 from pyrdf2vec import RDF2VecTransformer
 from pyrdf2vec.graphs import KG, Vertex
@@ -17,74 +18,55 @@ import os
 import networkx as nx
 import matplotlib.pyplot as plt
 
-from vectorReferenced import get_taxon_vector,cek_ncbi_id_by_wiki_id_via_string
+from modul.vectorReferenced import get_taxon_vector,cek_ncbi_id_by_wiki_id_via_string
+from modul.filterNodeEdge import removeNodeAndEdgeByFilter,removeEdgesNotInNodes
+from modul.handler_umum import contains_string_entire_column,contains_string_entire_column_boolean
 
-
-data=[
-    ('Myzus','1cucu','Cucumovirus'),
-    ('Bemisia','2cri','Crinivirus'),
-    ('Graminella','3wai','Waikavirus'),
-    ('Aleyrodidae','begomovirus_22_mei','Begomovirus'),
-    ('Schizaphis','5pol','Polerovirus'),
-    ('Acyrthosiphon','6pea-nama','Enamovirus'),
-    ('Frankliniella','7ort','Orthotospovirus'),
-    ('Thrips','8capchlo','Orthotospovirus'),
-    ('Laodelphax','9ten','Tenuivirus'),
-    ('Sogatella','10fiji','Fijivirus'),
-    ('Nilaparvata','+11tung','Tungrovirus'),
-    ('Myzus','+12pol','Polerovirus'),
-    ('Myzus','+13Poty','Potyvirus'),
+datas=[
+    ('1cucu','Cucumber mosaic virus','Aphididae','Myzus'),
+    ('2cri','Tomato chlorosis virus','Aleyrodidae','Bemisia'),
+    ('3wai','Maize chlorotic dwarf virus','Cicadellidae','Graminella'),
+    ('4beg','Tomato yellow leaf curl China virus','Aleyrodidae','Bemisia'),
+    ('5pol','Cereal yellow dwarf virus','Aphididae','Schizaphis'),
+    ('6pea','Pea enation mosaic virus 1','Aphididae','Acyrthosiphon pisum'),
+    ('7cucur','Cucurbit yellow stunting disorder virus','Aleyrodidae','Bemisia'),
+    ('8ten','Rice stripe tenuivirus','Delphacidae','Laodelphax'),
+    ('9fiji','Southern rice black-streaked dwarf virus','Delphacidae','Sogatella'),
+    ('10capchlo','Capsicum chlorosis orthotospovirus','Thripidae','Thrips Palmi'),
+    ('11barley','Barley yellow dwarf virus GAV','Aphididae','Sitobion avenae'),
+    ('12tospot','Tomato spotted wilt orthotospovirus','Thripidae','Frankliniella'),
 ]
 
-for each in data:
-
-
-    acuan_,data_,search_=each # vektor acuan  #data virus
+for data in datas:
+    data_,virus_utama,acuan_,ujian_=data # vektor acuan  #data virus
     bobot_ed=1;
     bobot_dc=1;
+
+    print('================================================================================================')
+    print('data : ',data_)
+    print('virus : ',virus_utama)
+
+
     # link enpoint sparql ncbi_ontology
     endpoint_url = 'http://localhost:3030/mydataset/query'
-
     #1
     #baca data
     df_node=pd.read_csv('dari_praproses/'+data_+'_node.csv',index_col=0) 
     df_edge=pd.read_csv('dari_praproses/'+data_+'_edge.csv',index_col=0)
-    
-    #2
-    #isi data kosong. mengisi takson kosong, dengan takson sebelumnya, untuk tambalan
-    takson=[
-        'superkingdom','kingdom','phylum','class','order','family','genus','species'
-    ]
 
-    for x,i in enumerate(takson):
-        if (i!='superkingdom'): #selain superkingdom update dengan data sebelumnya
-            for idx, row in df_node[pd.isnull(df_node[i])].iterrows():
-                df_node.loc[idx,[i]] = row[takson[x-1]]+'^'+i
-        else: 
-            for idx, row in df_node[pd.isnull(df_node[i])].iterrows():
-                df_node.loc[idx,[i]] = row[takson[x+1]]+'^'+i
+    # # eksperimen tambahan. bikin fakta tambahan, yaitu relasi virus utama dengan acuan 
+    virus_utama=df_node[df_node.virus_utama==True].taxon_id.to_list()
+    serangga_acuan=contains_string_entire_column(df_node,acuan_).taxon_id.to_list()
+    for i in virus_utama:
+        for j in serangga_acuan:
+            df_edge.loc[len(df_edge),['source_taxon_id','target_taxon_id','interaction_type']] = [i,j,'pathogenOf']
 
-    # 3
-    # pengelompokan
-    # Binning of the data based on serangga, virus, tanaman, nogroup
-    filter_tanaman = df_node['kingdom']=='NCBI:33090_Viridiplantae' 
-    filter_virus = (
-        (df_node['superkingdom']=='NCBI:10239_Viruses')
-        | (df_node.taxon_name.str.contains(r'\b(virus\w*|\w*virus)\b',case=False))
-        | (df_node.taxon_path.str.contains(r'\b(virus\w*|\w*virus)\b', case=False)) 
-        #jika berawalan atau berakhiran kata virus
-    )
-    filter_serangga = ((df_node['class']=='NCBI:50557_Insecta') )
 
-    df_node.loc[filter_tanaman, ['group','color']] = ["tanaman",'#1f922b'] #hijau
-    df_node.loc[filter_virus, ['group','color']] = ['virus','#671f92'] #ungu
-    df_node.loc[filter_serangga, ['group','color']] = ['serangga','#b22222'] #merah
-    df_node.loc[(
-        (filter_tanaman==False) & 
-        (filter_virus==False) &
-        (filter_serangga==False) 
-        ),['group','color']] = ['nogroup','#EADDCA'] #abu-abu
+    if(len(df_node[df_node['group']=="serangga"])<=2):
+        print("cuma dua serangga")
 
+
+    # #### Konversi graf
     #3
     #konversi graph 
     gnx = nx.MultiDiGraph()
@@ -129,24 +111,20 @@ for each in data:
 
             # skip subjek to_search
             if (s_id == to_search) & (o_id in virus_utama_ids):
-                print(s_label,'-->', o_label)
+                # print(s_label,'-->', o_label)
                 counter+=1
         
         return counter
 
-    # tandai virus utama
-    search_virus,taxon_,ncbi_id_=cek_ncbi_id_by_wiki_id_via_string(search_)
-    print("keyword virus utama: ",(search_virus,taxon_,ncbi_id_))
-    df_node.loc[df_node[taxon_].str.contains(search_virus), ['virus_utama']] = True
-
     # hitung relasi ke virus utama setiap serangga
     virus_utama_ids=list(df_node[df_node['virus_utama']==True].taxon_id)
     for idx,data in df_node[(df_node['group']=='serangga')].iterrows():
-        print(idx,data.taxon_name,data.taxon_id)
         _relasi = bfs_relasi_ke_virus_utama(gnx,data.taxon_id,virus_utama_ids)
-        print(_relasi)
+        # if(_relasi>0):
+        #     print(idx,data.taxon_name,data.taxon_id)
+        #     print(_relasi)
         df_node.loc[idx,'relasi_ke_virus_utama'] = _relasi
-        print("=================")
+        # print("=================")
         # update DC pake bobot
         # reset_n=(len(gnx.nodes)-1)/(len([node for node, data in gnx.nodes(data=True) if data.get('group') == "serangga"])-1)
         # results[data.taxon_id] = 1+(results[data.taxon_id]*_relasi*reset_n) #1+(CM*w) #kalo pake jumlah serangga sebagai pembagi
@@ -158,11 +136,36 @@ for each in data:
             label = gnx.nodes[node_id]['label']
             dc_serangga.append((rank, label, node_id))
 
+    #visualisasi data
+    print("mengecek BFS Degree tertinggi")
+    for to_search  in [dc_serangga[0][2]]:#["NCBI:7038"]:#"NCBI:33377","NCBI:7036",
+        for edge in nx.bfs_edges(gnx.to_undirected(), source=to_search, depth_limit=1):
+                s_id, o_id = edge
+
+                s_label = gnx.nodes[s_id]['label'] +' '+s_id
+                o_label = gnx.nodes[o_id]['label'] +' '+o_id
+                o_grup = gnx.nodes[o_id]['group']
+
+                # skip subjek to_search
+                # if (o_grup == 'tanaman'):
+                print(s_label,'-->', o_label)
+        print('===============')
+
+
+    print('detail takson serangga DC tertinggi :')
+    for i in [dc_serangga[0][2]]:#["NCBI:33377","NCBI:7036","NCBI:7038","NCBI:65032"]:
+        print(gnx.nodes[i])
+
+
+
     #5
     # Ambil data NCBI
     # data acuan
+    print('ambil data acuan dan ujian')
     data_acuan=get_taxon_vector(acuan_,endpoint_url)
-    data_acuan
+    print("data_acuan : ",data_acuan)
+    data_ujian=get_taxon_vector(ujian_,endpoint_url)
+    print("data_ujian : ",data_ujian)
 
     #6
     #konversi node networkx ke RDF
@@ -200,6 +203,8 @@ for each in data:
     #     ]
     CUSTOM_KG.literals = [[URL+"#"+i] for i in takson]
 
+
+
     #7
     #embedding
     # Ensure the determinism of this script by initializing a pseudo-random number.
@@ -224,6 +229,37 @@ for each in data:
         ent, #entity
     )
 
+
+    # visualisasi
+    # Reduce the dimensions of entity embeddings to represent them in a 2D plane.
+    # X= UMAP().fit_transform(embeddings)
+    # df_umap=pd.DataFrame(X,columns=['feature-vector-1','feature-vector-2'])
+
+
+    # text=[]
+    # labels=[]
+    # for x in transformer._entities:
+    #     if(x!="http://pyRDF2Vec#SERANGGA_ACUAN"):
+    #         text.append(gnx.nodes[x.split("#")[-1]]['famili'].split('_')[-1])
+    #         labels.append(gnx.nodes[x.split("#")[-1]]['label'])
+    #     else:
+    #         text.append("#TITIK_VEKTOR_ACUAN")
+    #         labels.append("#TITIK_VEKTOR_ACUAN")
+    # df_umap['text']=text
+    # df_umap['labels']=labels
+
+    # # # gnx.nodes[x.split("#")[-1]]['label']
+    # # df_umap['text']=list(map(lambda x: x.split("#")[-1],transformer._entities))
+    # fig = px.scatter(df_umap, x='feature-vector-1',y='feature-vector-2',text='text',hover_name='labels')
+    # fig.update_traces(textposition='top center')
+    # fig.update_layout(
+    #     height=650,
+    #     title_text='reduced word2vec visualization'
+    # )
+    # fig.show()
+
+
+
     #8
     #euclidean distance
     # buat dataframe
@@ -240,22 +276,23 @@ for each in data:
     #ambil koordinat acuan
     acuan=next(data_to_count[data_to_count['label']=='#SERANGGA_ACUAN'].iterrows())[1]
     acuan=np.array(tuple(acuan[i] for i in range(0,100)))
-    acuan
     #hitung ED
     for idx, row in data_to_count.iterrows():
         temp = np.array(tuple(row[i] for i in range(0,100)))
         data_to_count.loc[idx,['ed_result']] = np.linalg.norm(temp - acuan)
+
     #drop data acuan
     data_to_count.drop(data_to_count[data_to_count.label=="#SERANGGA_ACUAN"].index,inplace=True)
+
     # minmax scaling dc dan ed
     from sklearn.preprocessing import MinMaxScaler
     for i in ['dc_result', 'ed_result']:
         scaler = MinMaxScaler()
         scaler.fit(data_to_count[i].to_numpy().reshape(1, -1))
         scaler.transform(data_to_count[i].to_numpy().reshape(1, -1))
+
     #drop kolom embedding
     data_to_count.drop(columns=list(range(0,100)), inplace=True)
-
 
     #9
     #hitung kombinasi
@@ -263,26 +300,73 @@ for each in data:
         _dc = row['dc_result']
         _ed=( (row['ed_result']) if row['ed_result']!=0 else 1)
         data_to_count.loc[idx,['result']] = _dc/_ed
-    # urutkan
+        
+
+    # DC
+    print('hasil DC')
+    data_to_count=data_to_count.sort_values('dc_result',ascending=False).reset_index(drop=True)
+    print(data_to_count[['label','entity','dc_result']])
+
+    # Pengujian dc
+    print('pengujian DC')
+    for urutan in [0]:
+        takson=[i[0] for i in data_ujian if i[0] not in ["superkingdom","kingdom","filum","kelas"]]
+        id_hasil=data_to_count.iloc[urutan].entity
+        cek_hasil= { k:v for k,v in reversed(allnodes[id_hasil].items()) if k in takson }
+        cek_ujian= { k:v for k,v in data_ujian if k in takson }
+        print(acuan_,'->', data_)
+        print('ujian ',cek_ujian)
+        print('hasil ',cek_hasil)
+        cek=0
+        for i in reversed(takson):
+            cekk=cek_hasil[i]==cek_ujian[i]
+            cek+=cekk
+            print(i, cekk)
+        print(cek/len(takson))
+
+
+    # ED
+    print('hasil ED')
+    data_to_count=data_to_count.sort_values('ed_result',ascending=True).reset_index(drop=True)
+    print(data_to_count[['label','entity','ed_result']])
+    # Pengujian ed
+    print('pengujian ED')
+    for urutan in [0]:
+        takson=[i[0] for i in data_ujian if i[0] not in ["superkingdom","kingdom","filum","kelas"]]
+        id_hasil=data_to_count.iloc[urutan].entity
+        cek_hasil= { k:v for k,v in reversed(allnodes[id_hasil].items()) if k in takson }
+        cek_ujian= { k:v for k,v in data_ujian if k in takson }
+        print(acuan_,'->', data_)
+        print('ujian ',cek_ujian)
+        print('hasil ',cek_hasil)
+        cek=0
+        for i in reversed(takson):
+            cekk=cek_hasil[i]==cek_ujian[i]
+            cek+=cekk
+            print(i, cekk)
+        print(cek/len(takson))
+
+
+    # final score
+    print('pengujian final score')
     data_to_count=data_to_count.sort_values('result',ascending=False).reset_index(drop=True)
-    data_to_count[['label','dc_result','ed_result','result']]
-    data_to_count[['label','dc_result']].sort_values('dc_result',ascending=False).reset_index(drop=True)
-    data_to_count[['label','entity','ed_result']].sort_values('ed_result',ascending=True).reset_index(drop=True)
-
-
-    # # Pengujian
-    id_hasil=data_to_count.iloc[0].entity
-    cek_hasil= { k:v for k,v in reversed(allnodes[id_hasil].items()) if k in takson }
-    cek_acuan= { k:v for k,v in data_acuan if k in takson }
-    print(acuan_,'->', data_)
-    print('acuan ',cek_acuan)
-    print('hasil ',cek_hasil)
-    cek=0
-    for i in reversed(takson):
-        cekk=cek_hasil[i]==cek_acuan[i]
-        cek+=cekk
-        print(i, cekk)
-
-
-    print(cek/len(takson))
+    print(data_to_count[['label','dc_result','ed_result','result']])
+    # Pengujian kombinasi
+    print('pengujian final score')
+    for urutan in [0]:
+        takson=[i[0] for i in data_ujian if i[0] not in ["superkingdom","kingdom","filum","kelas"]]
+        id_hasil=data_to_count.iloc[urutan].entity
+        cek_hasil= { k:v for k,v in reversed(allnodes[id_hasil].items()) if k in takson }
+        cek_ujian= { k:v for k,v in data_ujian if k in takson }
+        print(acuan_,'->', data_)
+        print('ujian ',cek_ujian)
+        print('hasil ',cek_hasil)
+        cek=0
+        for i in reversed(takson):
+            cekk=cek_hasil[i]==cek_ujian[i]
+            cek+=cekk
+            print(i, cekk)
+        print(cek/len(takson))
+    
+    print('================================================================================================')
 

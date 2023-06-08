@@ -1,0 +1,32 @@
+def removeNodeAndEdgeByFilter(data_terfilter,node,edge):    
+    # hapus edge 
+    hapusEdge=[i.taxon_id for idx, i in data_terfilter.iterrows()]
+    edge.drop(edge[edge.source_taxon_id.isin(hapusEdge)].index,inplace=True)
+    edge.drop(edge[edge.target_taxon_id.isin(hapusEdge)].index,inplace=True)
+
+    # hapus node 
+    node.drop( data_terfilter.index,inplace=True)
+    
+    return node, edge
+
+def takeNodeAndEdgeByFilter(data_terfilter,node,edge):    
+    # hapus edge lama
+    # hapusEdge=[i.taxon_id for idx, i in data_terfilter.iterrows()]
+    # edge.drop(edge[edge.source_taxon_id.isin(hapusEdge)==False].index,inplace=True)
+    # edge.drop(edge[edge.target_taxon_id.isin(hapusEdge)==False].index,inplace=True)
+    # hapus edge baru
+    edgeAda=[i.taxon_id for idx, i in node.iterrows()]
+    edge=edge[ ( edge.source_taxon_id.isin(edgeAda) & edge.target_taxon_id.isin(edgeAda) )  ]
+
+    # hapus node fungi
+    node = data_terfilter
+    
+    return node, edge
+
+
+#delete edges that are not in nodes
+def removeEdgesNotInNodes(node, edge):
+    edgeAda = [i.taxon_id for idx, i in node.iterrows()]
+    edge = edge[ ( edge.source_taxon_id.isin(edgeAda) & edge.target_taxon_id.isin(edgeAda) )  ]
+
+    return edge;

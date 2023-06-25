@@ -223,22 +223,12 @@ def update_df_pake_path_ujung(df_node, df_edge,printOutput=False):
 
 
 def removeOtherThanNCBI(node,edge):
-    #Cek apakah masih ada selain NCBI?
-    print({a.taxon_id.split(':')[0] for i,a in node[node["taxon_id"].str.contains("NCBI") == False].iterrows()})
-    print('------------------------------------')
-
-    #preview yang dihapus selain NCBI
-    print('node')
-    print('sebelum ', len(node))
-    print('sesudah ', len(node) - len(node[node["taxon_id"].str.contains("NCBI") == False]))
-    print('edge')
-    print('target: sebelum', len(edge))
-    print('target: sesudah', len(edge)- len(edge[edge["target_taxon_id"].str.contains("NCBI") == False]))
-    print('source: sebelum', len(edge))
-    print('source: sesudah', len(edge)- len(edge[edge["source_taxon_id"].str.contains("NCBI") == False]))
+    print("removeOtherThanNCBI")
+    print("sebelum :",len(node),len(edge))
     #drop selain NCBI
     node = node[node["taxon_id"].str.contains("NCBI")]
     edge = edge[edge["target_taxon_id"].str.contains("NCBI")]
     edge = edge[edge["source_taxon_id"].str.contains("NCBI")]
 
+    print("sesudah :",len(node),len(edge))
     return (node,edge)

@@ -3,7 +3,7 @@ from SPARQLWrapper import SPARQLWrapper
 import requests
 
 # pencarian ID berdasarkan nama entity
-def call_wiki_api(item):
+def get_wiki_id_by_name_api(item):
   try:
     url = f"https://www.wikidata.org/w/api.php?action=wbsearchentities&search={item}&language=en&format=json"
     data = requests.get(url).json()
@@ -13,7 +13,7 @@ def call_wiki_api(item):
     return False
 
 def cek_ncbi_id_by_wiki_id_via_string(acuan_):    
-    id_=call_wiki_api(acuan_)
+    id_=get_wiki_id_by_name_api(acuan_)
     if not id_:
         return False
     

@@ -1,6 +1,38 @@
 from SPARQLWrapper import SPARQLWrapper
 import pandas as pd
 
+
+def getDescendant(id_globi, endpoint_url):
+    id_ncbi=id_globi.split(':')[-1]
+    query="""
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX owl: <http://www.w3.org/2002/07/owl#>
+    PREFIX obo: <http://purl.obolibrary.org/obo/>
+    PREFIX obo2: <http://purl.obolibrary.org/obo/ncbitaxon#>
+
+    SELECT ?Objlabel ?Ranklabel (REPLACE(STR(?obj), "http://purl.obolibrary.org/obo/NCBITaxon_", "NCBI:") AS ?objWithoutPrefix) WHERE {
+    ?obj rdfs:subClassOf* obo:NCBITaxon_"""+id_ncbi+""".
+    ?obj rdfs:label ?Objlabel.
+    ?obj obo2:has_rank ?rank.
+    ?rank rdfs:label ?Ranklabel.
+    }
+    """
+    spw=SPARQLWrapper(endpoint_url)
+    spw.setQuery(query)
+    spw.setReturnFormat('json')
+    hasil=spw.query().convert()
+
+    kembalian=[
+        (
+            i['Objlabel']['value'],
+            i['Ranklabel']['value'],
+            i['objWithoutPrefix']['value']
+        ) 
+        for i in hasil['results']['bindings']
+    ]
+    
+    return kembalian
+
 def getTaxonomy(id_globi, endpoint_url):
     id_ncbi=id_globi.split(':')[-1]
     query="""

@@ -20,6 +20,7 @@ def submit():
 def stream(virus):
     return Response(praproses(virus), mimetype='text/event-stream')
 
+# tidak terpakai stw ini
 @app.route('/visualisasi/pie/', methods=["POST"])
 def visualisasi_pie_proses():
     data = request.get_json()

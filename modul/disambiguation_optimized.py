@@ -180,6 +180,8 @@ def update_df_pake_kamus(kamus_ncbi,df_node,df_edge,printOutput=False):
             print('menjadi', (" | ".join(list_isi)))
         df_node.loc[idx,'taxon_path_ids'] = " | ".join(list_isi)
     
+    df_node.reset_index(drop=True,inplace=True)
+    df_edge.reset_index(drop=True,inplace=True)
     return df_node,df_edge
 
 
@@ -218,7 +220,9 @@ def update_df_pake_path_ujung(df_node, df_edge,printOutput=False):
                     cek[0],
                     inplace=True
                 )
-        
+    
+    df_node.reset_index(drop=True,inplace=True)
+    df_edge.reset_index(drop=True,inplace=True)
     return df_node,df_edge
 
 
@@ -231,4 +235,6 @@ def removeOtherThanNCBI(node,edge):
     edge = edge[edge["source_taxon_id"].str.contains("NCBI")]
 
     print("sesudah :",len(node),len(edge))
+    node.reset_index(drop=True,inplace=True)
+    edge.reset_index(drop=True,inplace=True)
     return (node,edge)

@@ -53,13 +53,13 @@ def cek_ncbi_id_by_wiki_id_via_string(acuan_):
 
 
 # untuk vector
-def get_taxon_vector(acuan_, endpoint_url):
+def get_taxon_vector(acuan_, endpoint_url, taxon_indonesia=True):
     cek = cek_ncbi_id_by_wiki_id_via_string(acuan_) #(Aphididae, family, NCBI:27482)
     if not cek:
         return False
 
     #langsung pake bahasa indonesia karena di graf nanti akan pake bahasa indonesia
-    taxon_dict={
+    terjemahan={
         'superkingdom':'superkingdom',
         'kingdom':'kingdom',
         'phylum':'filum',
@@ -72,6 +72,10 @@ def get_taxon_vector(acuan_, endpoint_url):
     data=[]
     for nama,rank,kode in getTaxonomy(cek[2],endpoint_url):
         #nama=nama.replace(" ","-")
-        if rank in ['superkingdom','kingdom','phylum','class','order','family','genus','species']:
-            data.append((taxon_dict[rank],kode+'_'+nama)) #('family', 'NCBI:27482_Aphididae')
+        if rank not in ['superkingdom','kingdom','phylum','class','order','family','genus','species']:
+            continue
+        if (taxon_indonesia):
+            data.append((terjemahan[rank],kode+'_'+nama)) #('family', 'NCBI:27482_Aphididae')
+        else :
+            data.append((rank,kode+'_'+nama))
     return data

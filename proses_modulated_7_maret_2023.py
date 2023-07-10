@@ -1,3 +1,34 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# #### catatan: 
+# beberapa data taksonomi memang kosong dari NCBInya, misal data interaksi virus pycv malah terhubung ke genus capsicum bukan spesies capsicum. dan itu memang dari data GloBInya langsung
+
+# In[1]:
+
+
+# # reset import package
+# def reloadPackageOwn():
+#     from importlib import reload  
+#     import os # we use os.path.join, os.path.basename
+#     import sys # we use sys.path
+#     import glob # we use glob.glob
+#     import importlib # we use importlib.import_module
+
+#     import_folder = os.getcwd()
+#     sys.path.append(import_folder) # this tells python to look in `import_folder` for imports
+#     for src_file in glob.glob(os.path.join(import_folder, '*.py')):
+#         name = os.path.basename(src_file)[:-3]
+#         importlib.import_module(name)
+#         reload(sys.modules[name])
+#         importlib.import_module(name)
+        
+# reloadPackageOwn()
+
+
+# In[2]:
+
+
 from tqdm import tqdm
 from pyrdf2vec import RDF2VecTransformer
 from pyrdf2vec.graphs import KG, Vertex
@@ -21,8 +52,15 @@ from modul.vectorReferenced import get_taxon_vector,cek_ncbi_id_by_wiki_id_via_s
 from modul.filterNodeEdge import removeNodeAndEdgeByFilter,removeEdgesNotInNodes
 from modul.helper_umum import contains_string_entire_column,contains_string_entire_column_boolean
 #from process import cek_bfs, nx_to_pyviz
+from modul.grafHelper import _set_networkx_graph, _plot_nx_by_matplotlib
+from modul.visualisasiHelper import embeddingPlot,plotly_graph
+from modul.embeddingHelper import df_serangga_to_rdf, rdf_KG_to_embeddings, df_to_dictionary_taxon
+from modul.custom_degree_centrality import degree_centrality_custom
 
 
+# #### Parameter
+
+# In[3]:
 
 
 data=[
@@ -59,7 +97,7 @@ ncbi_ontology_url = 'http://localhost:3030/mydataset/query'
 
 # #### input data
 
-# In[299]:
+# In[4]:
 
 
 #1
@@ -68,7 +106,7 @@ df_node=pd.read_csv('dari_praproses/'+data_+'_node.csv',index_col=0)
 df_edge=pd.read_csv('dari_praproses/'+data_+'_edge.csv',index_col=0)
 
 
-# In[300]:
+# In[5]:
 
 
 df_node[df_node['group']=='virus']
@@ -77,13 +115,13 @@ df_node[df_node['group']=='virus']
 # df_node
 
 
-# In[301]:
+# In[6]:
 
 
 acuan_
 
 
-# In[302]:
+# In[7]:
 
 
 # pra-proses khusus proses
@@ -96,7 +134,7 @@ filter_genus_sampai_species_null=(
 df_node,df_edge = removeNodeAndEdgeByFilter(df_node[filter_genus_sampai_species_null], df_node,df_edge)
 
 
-# In[303]:
+# In[8]:
 
 
 print(len(df_edge))
@@ -104,7 +142,7 @@ df_edge.drop_duplicates(inplace=True)
 print(len(df_edge))
 
 
-# In[304]:
+# In[9]:
 
 
 # pra-proses khusus proses
@@ -122,7 +160,7 @@ for x,i in enumerate(takson):
             df_node.loc[idx,[i]] = row[takson[x+1]]+'^'+i
 
 
-# In[305]:
+# In[10]:
 
 
 # pra-proses khusus proses
@@ -148,7 +186,7 @@ for j in serangga_acuan:
 print(len(df_edge))
 
 
-# In[306]:
+# In[11]:
 
 
 # Ini harusnya di praproses. tapi belum fix baiknya hapus atau tidak
@@ -157,7 +195,7 @@ bukan_virus_utama=(df_node['group']=="virus") & (df_node.virus_utama!=True)
 df_node,df_edge = removeNodeAndEdgeByFilter(df_node[bukan_virus_utama], df_node,df_edge)
 
 
-# In[307]:
+# In[12]:
 
 
 if(len(df_node[df_node['group']=="serangga"])<=2):
@@ -166,207 +204,23 @@ if(len(df_node[df_node['group']=="serangga"])<=2):
 
 # # Konversi graf
 
-# In[308]:
+# In[13]:
 
 
 #3
 #konversi graph 
-gnx = nx.MultiDiGraph()
-#node
-for i,a in df_node.iterrows():
-    #mulai disini akan digunakan taksonomi bahasa indonesia pada data.
-    gnx.add_node(
-        a['taxon_id'],
-        label=a['taxon_name'],
-        superkingdom=a['superkingdom'],
-        kingdom=a['kingdom'],
-        filum=a['phylum'],
-        kelas=a['class'],
-        ordo=a['order'],
-        famili=a['family'],
-        genus=a['genus'],
-        spesies=a['species'],
-        group=a['group'],
-        color=a['color'],
-    )
-#edge
-for i,a in df_edge.iterrows():
-    gnx.add_edge(
-        a['source_taxon_id'],
-        a['target_taxon_id'],
-        label=a['interaction_type'],
-    )
-
-
-# In[309]:
-
+gnx = _set_networkx_graph(df_node, df_edge)
 
 # # cuma tampilan, visualisasi graf
-# G=gnx
-
-# fig, ax = plt.subplots(figsize=(20, 20))
-
-# # Generate layout for visualization
-# # pos = nx.kamada_kawai_layout(G)
-# # pos = nx.spring_layout(G)
-# pos = nx.nx_agraph.graphviz_layout(G, prog="neato", args="")
-
-# # Visualize graph components
-# nx.draw_networkx_edges(G, pos, alpha=0.3, edge_color='g')
-# nx.draw_networkx_nodes(G, pos, node_color=list(nx.get_node_attributes(G, "color").values()), alpha=0.9)
-
-# #node label
-# # for i in ['#b22222','#671f92','#1f922b','#EADDCA']: # filtering dengan bedakan warna node
-# #     label_options = {"ec": i, "fc": 'white', "alpha": 0.7}
-# #     nx.draw_networkx_labels(
-# #         nx.subgraph_view(G, filter_node=lambda n1: G.nodes(data=True)[n1].get("color", True) == i),
-# #         pos, 
-# #         font_size=10, 
-# #         bbox=label_options
-# #     )
-
-# #edge labels
-# edge_labels={x:i for i,x in zip(nx.get_edge_attributes(G, "label").values(),G.edges())}
-# nx.draw_networkx_edge_labels(G, pos=pos, edge_labels=edge_labels)
+# _plot_nx_by_matplotlib(gnx)
 
 
-# # Title/legend
-# font = {"fontname": "Helvetica", "color": "k", "fontweight": "bold", "fontsize": 14}
-# ax.set_title("Graf Interaksi "+nama_virus, font)
-# # Change font color for legend
-# font["color"] = "r"
+# # visualisasi Graf
 
-# ax.text(
-#     0.80,
-#     0.10,
-#     "hijau = Tanaman",
-#     horizontalalignment="center",
-#     transform=ax.transAxes,
-#     fontdict=font,
-# )
-# ax.text(
-#     0.80,
-#     0.08,
-#     "merah = Serangga",
-#     horizontalalignment="center",
-#     transform=ax.transAxes,
-#     fontdict=font,
-# )
-
-# ax.text(
-#     0.80,
-#     0.06,
-#     "ungu = Virus",
-#     horizontalalignment="center",
-#     transform=ax.transAxes,
-#     fontdict=font,
-# )
-
-# ax.text(
-#     0.80,
-#     0.04,
-#     "abu-abu = Nogroup",
-#     horizontalalignment="center",
-#     transform=ax.transAxes,
-#     fontdict=font,
-# )
-
-# # Resize figure for label readibility
-# ax.margins(0.1, 0.05)
-# fig.tight_layout()
-# plt.axis("off")
-# plt.show()
+# In[14]:
 
 
-# In[285]:
-
-
-import plotly.graph_objects as go
-G=gnx
-pos = nx.nx_agraph.graphviz_layout(G, prog="neato", args="")
-
-edge_x = []
-edge_y = []
-for edge in G.edges():
-    x0, y0 = pos[edge[0]]
-    x1, y1 = pos[edge[1]]
-    edge_x.append(x0)
-    edge_x.append(x1)
-    edge_x.append(None)
-    edge_y.append(y0)
-    edge_y.append(y1)
-    edge_y.append(None)
-
-edge_trace = go.Scatter(
-    x=edge_x, y=edge_y,
-    line= {"width":0.5, "color":'#888'},
-    hoverinfo='none',
-    mode='lines')
-
-node_x = []
-node_y = []
-node_colors = []
-node_text = []
-for node,data in G.nodes(data=True):
-    x, y = pos[node]
-    node_x.append(x)
-    node_y.append(y)
-    node_colors.append(data['color'])
-    node_text.append(data['label'])
-
-node_trace = go.Scatter(
-    x=node_x, y=node_y,
-    mode='markers',
-    hoverinfo='text',
-    marker={
-        # 'showscale':True,
-        # 'colorscale':'Reds',
-        'reversescale':True,
-        'color':[],
-        'size':10,
-        # 'colorbar':{
-        #     # 'thickness':15,
-        #     # 'title':'Node Connections',
-        #     # 'xanchor':'left',
-        #     # 'titleside':'right'
-        # },
-        'line_width':2   
-    }
-)
-node_trace.marker.color = node_colors
-node_trace.text = node_text
-
-
-# In[293]:
-
-
-fig = go.Figure(
-    data=[edge_trace, node_trace],
-    layout=go.Layout(
-        title='Network graph made with Python',
-        titlefont_size=16,
-        showlegend=False,
-        hovermode='closest',
-        margin={
-            'b':20,'l':5,'r':5,'t':40
-        },
-        annotations=[{
-            "text":"Insect-virus-plant",
-            'showarrow':False,
-            'xref':"paper", 
-            'yref':"paper",
-            'x':0.005, 
-            'y':-0.002 
-        }],
-        xaxis={'showgrid':False, 'zeroline':False, 'showticklabels':False},
-        yaxis={'showgrid':False, 'zeroline':False, 'showticklabels':False}
-    )
-)
-fig.show()
-
-
-# In[261]:
-
+plotly_graph(gnx)
 
 # # # cuma tampilan, visualisasi pyviz
 # from pyvis.network import Network
@@ -400,14 +254,39 @@ fig.show()
 # nt.show("tmp.fig02.html")
 
 
+# In[15]:
+
+
+# visualisasi embedding serangga
+
+# embedding
+# input : df_node, URL
+URL = "http://pyRDF2Vec"
+df_serangga = df_node[df_node['group']=="serangga"]
+CUSTOM_KG = df_serangga_to_rdf(df_serangga, URL)
+# proses
+list_serangga=df_node[df_node['group']=="serangga"].taxon_id.to_list()
+list_of_entities = [ URL+"#"+taxon_id for taxon_id in list_serangga ]
+transformer, embeddings, _ = rdf_KG_to_embeddings(CUSTOM_KG, list_of_entities)
+# sama dua2nya # list_of_entities == transformer._entities 
+
+# dictionary serangga
+dictionary_serangga = df_to_dictionary_taxon(df_serangga)
+# output
+# embeddings, list_of_entities, dictionary_serangga
+
+# plotting
+embeddingPlot(embeddings, list_of_entities, dictionary_serangga)
+
+
 # # Analisis Interaksi
 
-# In[138]:
+# In[16]:
 
 
-from modul.custom_degree_centrality import degree_centrality_custom
-import importlib, sys
-importlib.reload(sys.modules['modul.custom_degree_centrality'])
+# from modul.custom_degree_centrality import degree_centrality_custom
+# import importlib, sys
+# importlib.reload(sys.modules['modul.custom_degree_centrality'])
 
 #4 
 # Degree Centrality Custom
@@ -417,14 +296,14 @@ results_dc = degree_centrality_custom(gnx,virus_utama_ids,serangga_ids)
 allnodes = gnx.nodes
 
 
-# In[139]:
+# In[17]:
 
 
 urutan=sorted(results_dc.items(), key=lambda item: item[1], reverse=True)
 urutan
 
 
-# In[140]:
+# In[18]:
 
 
 #visualisasi data
@@ -445,120 +324,49 @@ for to_search  in [urutan[0][0]]:#["NCBI:7038"]:#"NCBI:33377","NCBI:7036",
 
 # # Analisis Taksonomi
 
-# In[141]:
+# In[19]:
 
 
 #5
 # Ambil data NCBI
 # data acuan
-data_acuan=get_taxon_vector(acuan_,ncbi_ontology_url)
+data_acuan=get_taxon_vector(acuan_,ncbi_ontology_url,False)
 print(data_acuan)
 data_ujian=get_taxon_vector(ujian_,ncbi_ontology_url)
 print(data_ujian)
 
 
-# In[142]:
+# In[20]:
 
 
-#6
-#konversi node networkx ke RDF
+#6 #konversi node networkx ke RDF
+# input : df_node, URL, data_acuan
 URL = "http://pyRDF2Vec"
-CUSTOM_KG = KG()
+df_serangga = df_node[df_node['group']=="serangga"]
+CUSTOM_KG = df_serangga_to_rdf(df_serangga, URL, data_acuan)
 
-takson=[i[0] for i in data_acuan]
-for i in ["superkingdom","kingdom","filum","kelas"]:
-    takson.remove(i) 
-
-# memasukan RDF serangga acuan
-subj = Vertex(f"{URL}#SERANGGA_ACUAN")
-for i,j in data_acuan:
-    if(i not in ["superkingdom","kingdom","filum","kelas"]):
-        j = j.replace(' ','-')
-        obj = Vertex((URL+"#"+j))
-        pred = Vertex((URL+"#"+i), predicate=True, vprev=subj, vnext=obj)
-        #pred = Vertex((URL+"#taxon_path_ids"), predicate=True, vprev=subj, vnext=obj)
-        CUSTOM_KG.add_walk(subj, pred, obj)
-
-# proses konversi 
-for index,data in gnx.nodes(data=True):
-    if(data['group']=='serangga'): #jika serangga
-        subj = Vertex(URL+"#"+index)
-        for i in takson:
-            #if(isinstance(data[i], str)): #jika dia string atau tidak nan/kosong.
-            #if(i not in ["superkingdom","kingdom","filum","kelas"]):
-                id_takson=data[i].replace(' ','-')#.split('_')[0]
-                obj = Vertex((URL+"#"+id_takson))
-                pred = Vertex((URL+"#"+i), predicate=True, vprev=subj, vnext=obj)
-                #pred = Vertex((URL+"#taxon_path_ids"), predicate=True, vprev=subj, vnext=obj)
-                CUSTOM_KG.add_walk(subj, pred, obj)
-# CUSTOM_KG.literals=[
-#         [f"{URL}#taxon_path_ids"],
-#     ]
-CUSTOM_KG.literals = [[URL+"#"+i] for i in takson]
-
-
-# In[143]:
-
-
-#7
-#embedding
-# Ensure the determinism of this script by initializing a pseudo-random number.
-RANDOM_STATE = 22
-transformer = RDF2VecTransformer(
-    # Use one worker threads for Word2Vec to ensure random determinism.
-    # Must be used with PYTHONHASHSEED.
-    Word2Vec(epochs=1000),
-    # Extract a maximum of 10 walks of a maximum depth of 4 for each entity
-    # using two processes and use a random state to ensure that the same walks
-    # are generated for the entities.
-    walkers=[RandomWalker(2, 5, n_jobs=2, with_reverse=False, random_state=RANDOM_STATE)],
-    #verbose=1,
-)
-# transformer = RDF2VecTransformer(verbose=1)
+#7 #embedding
+list_serangga=df_node[df_node['group']=="serangga"].taxon_id.to_list()
 # list entity yang akan diembedd. serangga acuan urutan terakhir
-ent = [ URL+"#"+index for index,data in gnx.nodes(data=True) if(data['group']=='serangga') ] #jika serangga
-ent.append(f"{URL}#SERANGGA_ACUAN")
-# Fit the transformer to the knowledge graph and the entities.
-embeddings, _ = transformer.fit_transform(
-    CUSTOM_KG, #the KG
-    ent, #entity
-)
+list_of_entities = [ URL+"#"+taxon_id for taxon_id in list_serangga ]
+list_of_entities.append(f"{URL}#SERANGGA_ACUAN")
+transformer, embeddings, _ = rdf_KG_to_embeddings(CUSTOM_KG, list_of_entities)
+# list_of_entities == transformer._entities # True # artinya sama dua2nya
 
+# dictionary serangga
+dictionary_serangga = df_to_dictionary_taxon(df_serangga)
+# output
+# embeddings, list_of_entities, dictionary_serangga
 
-# In[144]:
 
 
 # visualisasi
-
-# Reduce the dimensions of entity embeddings to represent them in a 2D plane.
-X= UMAP().fit_transform(embeddings)
-df_umap=pd.DataFrame(X,columns=['feature-vector-1','feature-vector-2'])
-
-
-text=[]
-labels=[]
-for x in transformer._entities:
-    if(x!="http://pyRDF2Vec#SERANGGA_ACUAN"):
-        text.append(gnx.nodes[x.split("#")[-1]]['famili'].split('_')[-1])
-        labels.append(gnx.nodes[x.split("#")[-1]]['label'])
-    else:
-        text.append("#TITIK_VEKTOR_ACUAN")
-        labels.append("#TITIK_VEKTOR_ACUAN")
-df_umap['text']=text
-df_umap['labels']=labels
-
-# # gnx.nodes[x.split("#")[-1]]['label']
-# df_umap['text']=list(map(lambda x: x.split("#")[-1],transformer._entities))
-fig = px.scatter(df_umap, x='feature-vector-1',y='feature-vector-2',text='text',hover_name='labels')
-fig.update_traces(textposition='top center')
-fig.update_layout(
-    height=650,
-    title_text='reduced word2vec visualization'
-)
-fig.show()
+# input
+# embeddings, list_of_entities, dictionary_serangga
+# embeddingPlot(embeddings, list_of_entities, dictionary_serangga)
 
 
-# In[145]:
+# In[21]:
 
 
 #8
@@ -593,21 +401,17 @@ for idx, row in data_to_count.iterrows():
 data_to_count.drop(data_to_count[data_to_count.label=="#SERANGGA_ACUAN"].index,inplace=True)
 
 
-# In[146]:
+# In[22]:
 
 
 #drop kolom embedding
 data_to_count.drop(columns=list(range(0,100)), inplace=True)
 
 
-# In[147]:
+# In[23]:
 
 
-def minmax(data):
-    return (data - data.min())/ (data.max() - data.min())
 
-def std_scale(data):
-    return (data - data.mean()) / data.std()
 
 
 # simple scaling ed_result
@@ -629,13 +433,13 @@ data_to_count['ed_result_scaled'] = minmax(data_to_count['ed_result'])
 data_to_count['dc_result_scaled'] = minmax(data_to_count['dc_result'])
 
 
-# In[148]:
+# In[24]:
 
 
 data_to_count
 
 
-# In[149]:
+# In[25]:
 
 
 #9
@@ -653,7 +457,7 @@ data_to_count['result'] = data_to_count['result'] / data_to_count['result'].max(
 
 # # Pengujian
 
-# In[150]:
+# In[26]:
 
 
 # DC
@@ -661,7 +465,7 @@ data_to_count=data_to_count.sort_values('dc_result',ascending=False).reset_index
 data_to_count[['label','entity','dc_result']]
 
 
-# In[151]:
+# In[27]:
 
 
 # Pengujian dc
@@ -681,7 +485,7 @@ for urutan in range(0,3):
     print(cek/len(takson))
 
 
-# In[152]:
+# In[28]:
 
 
 # ED
@@ -689,7 +493,7 @@ data_to_count=data_to_count.sort_values('ed_result',ascending=True).reset_index(
 data_to_count[['label','entity','ed_result']]
 
 
-# In[153]:
+# In[29]:
 
 
 # Pengujian ed
@@ -709,7 +513,7 @@ for urutan in range(0,3):
     print(cek/len(takson))
 
 
-# In[154]:
+# In[30]:
 
 
 # final score kombinasi
@@ -717,7 +521,7 @@ data_to_count=data_to_count.sort_values('result',ascending=False).reset_index(dr
 data_to_count[['label','dc_result','ed_result','result']]
 
 
-# In[155]:
+# In[31]:
 
 
 # Pengujian kombinasi
@@ -737,7 +541,7 @@ for urutan in range(0,3):
     print(cek/len(takson))
 
 
-# In[156]:
+# In[32]:
 
 
 # Pengujian kombinasi
@@ -762,7 +566,7 @@ for urutan in range(0,3):
 
 # # Visualisasi Hasil Analisis
 
-# In[157]:
+# In[33]:
 
 
 import plotly.graph_objects as go
@@ -790,7 +594,7 @@ fig.update_layout(
 fig.show()
 
 
-# In[158]:
+# In[34]:
 
 
 to_itter=data_to_count.sort_values('ed_result',ascending=True).reset_index(drop=True)[:10]
@@ -816,7 +620,7 @@ fig.update_layout(
 fig.show()
 
 
-# In[159]:
+# In[35]:
 
 
 import plotly.graph_objects as go
@@ -846,7 +650,7 @@ fig.show()
 
 # # Dibawah ini tidak termasuk
 
-# In[160]:
+# In[36]:
 
 
 # #visualisasi data
@@ -864,26 +668,26 @@ fig.show()
 # print('===============')
 
 
-# In[161]:
+# In[37]:
 
 
 df_node[df_node['taxon_name'].str.contains('Thrips')]
 
 
-# In[162]:
+# In[38]:
 
 
 df_edge.interaction_type.unique()
 
 
-# In[163]:
+# In[39]:
 
 
 ini=df_edge[df_edge['interaction_type'].isin(['visitFlowersOf'])]
 ini
 
 
-# In[164]:
+# In[40]:
 
 
 df_node[df_node['taxon_id'].isin(
@@ -892,13 +696,13 @@ df_node[df_node['taxon_id'].isin(
 )]
 
 
-# In[165]:
+# In[41]:
 
 
 contains_string_entire_column(df_edge,'NCBI:1341303')
 
 
-# In[166]:
+# In[42]:
 
 
 contains_string_entire_column(df_node,'NCBI:12315')

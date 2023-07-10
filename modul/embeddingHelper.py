@@ -4,73 +4,6 @@ from pyrdf2vec.embedders import FastText,Word2Vec
 from pyrdf2vec.walkers import RandomWalker
 
 
-def nxnode_to_rdf(gnx, URL, data_acuan=None):
-    #konversi node networkx ke RDF
-    # parameter ------------------------------------------------------------------------------------------------
-    # df_serangga adalah dataframe yang berisi data serangga
-    # URL adalah URL dari KG
-    # data acuan
-    # output ---------------------------------------------------------------------------------------------------
-    # KG() . rdf kg
-    #------------------------------------------------------------------------------------------------------------
-
-    CUSTOM_KG = KG()
-    keindo={
-        'superkingdom':'superkingdom',
-        'kingdom':'kingdom',
-        'phylum':'filum',
-        'class':'kelas',
-        'order':'ordo',
-        'family':'famili',
-        'genus':'genus',
-        'species':'spesies'
-    }
-    keinggris={
-        'superkingdom':'superkingdom',
-        'kingdom':'kingdom',
-        'filum':'phylum',
-        'kelas':'class',
-        'ordo':'order',
-        'famili':'family',
-        'genus':'genus',
-        'spesies':'species',
-    }
-    takson_to_embedd=[
-        #  'superkingdom','kingdom','filum','kelas',
-        'ordo','famili','genus','spesies'
-    ];
-
-    # kalo ada data acuan
-    if(data_acuan is not None):
-        # kalau takson_to_embedd not in data_acuan
-        listnya=[key for key, value in data_acuan]
-        takson_to_embedd=[x for x in takson_to_embedd if x in listnya]
-        
-        # memasukan RDF serangga acuan
-        subj = Vertex(f"{URL}#SERANGGA_ACUAN")
-        for i,j in data_acuan:
-            if(i in takson_to_embedd):
-                j = j.replace(' ','-')
-                obj = Vertex((URL+"#"+j))
-                pred = Vertex((URL+"#"+i), predicate=True, vprev=subj, vnext=obj)
-                #pred = Vertex((URL+"#taxon_path_ids"), predicate=True, vprev=subj, vnext=obj)
-                CUSTOM_KG.add_walk(subj, pred, obj)
-
-    # proses konversi 
-    for index,data in gnx.nodes(data=True):
-        if(data['group']=='serangga'): #jika serangga
-            subj = Vertex(URL+"#"+index)
-            for i in takson_to_embedd:
-                    id_takson=data[keindo[i]].replace(' ','-')#.split('_')[0]
-                    obj = Vertex((URL+"#"+id_takson))
-                    pred = Vertex((URL+"#"+i), predicate=True, vprev=subj, vnext=obj)
-                    CUSTOM_KG.add_walk(subj, pred, obj)
-    # CUSTOM_KG.literals=[
-    #         [f"{URL}#taxon_path_ids"],
-    #     ]
-    CUSTOM_KG.literals = [[URL+"#"+i] for i in takson_to_embedd]
-
-
 def df_serangga_to_rdf(df_serangga, URL, data_acuan=None):
     #konversi dataframe serangga ke RDF KG
     # parameter ------------------------------------------------------------------------------------------------
@@ -156,3 +89,108 @@ def rdf_KG_to_embeddings(CUSTOM_KG, list_entity):
     )
 
     return transformer, embeddings, _
+
+
+def df_to_dictionary_taxon(df_serangga):
+    takson_to_embedd=[
+        'superkingdom', 'kingdom', 'phylum','class', 
+        'order', 'family', 'genus', 'species'
+    ];
+    dictionary_serangga={}
+    for i,d in df_serangga.iterrows():
+        to_add={ i:d[i] for i in takson_to_embedd}
+        to_add['taxon_name']=d['taxon_name']
+        dictionary_serangga[d['taxon_id']] = to_add
+
+    return dictionary_serangga
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# tidak terpakai
+def nxnode_to_rdf(gnx, URL, data_acuan=None):
+    #konversi node networkx ke RDF
+    # parameter ------------------------------------------------------------------------------------------------
+    # df_serangga adalah dataframe yang berisi data serangga
+    # URL adalah URL dari KG
+    # data acuan
+    # output ---------------------------------------------------------------------------------------------------
+    # KG() . rdf kg
+    #------------------------------------------------------------------------------------------------------------
+
+    CUSTOM_KG = KG()
+    keindo={
+        'superkingdom':'superkingdom',
+        'kingdom':'kingdom',
+        'phylum':'filum',
+        'class':'kelas',
+        'order':'ordo',
+        'family':'famili',
+        'genus':'genus',
+        'species':'spesies'
+    }
+    keinggris={
+        'superkingdom':'superkingdom',
+        'kingdom':'kingdom',
+        'filum':'phylum',
+        'kelas':'class',
+        'ordo':'order',
+        'famili':'family',
+        'genus':'genus',
+        'spesies':'species',
+    }
+    takson_to_embedd=[
+        #  'superkingdom','kingdom','filum','kelas',
+        'ordo','famili','genus','spesies'
+    ];
+
+    # kalo ada data acuan
+    if(data_acuan is not None):
+        # kalau takson_to_embedd not in data_acuan
+        listnya=[key for key, value in data_acuan]
+        takson_to_embedd=[x for x in takson_to_embedd if x in listnya]
+        
+        # memasukan RDF serangga acuan
+        subj = Vertex(f"{URL}#SERANGGA_ACUAN")
+        for i,j in data_acuan:
+            if(i in takson_to_embedd):
+                j = j.replace(' ','-')
+                obj = Vertex((URL+"#"+j))
+                pred = Vertex((URL+"#"+i), predicate=True, vprev=subj, vnext=obj)
+                #pred = Vertex((URL+"#taxon_path_ids"), predicate=True, vprev=subj, vnext=obj)
+                CUSTOM_KG.add_walk(subj, pred, obj)
+
+    # proses konversi 
+    for index,data in gnx.nodes(data=True):
+        if(data['group']=='serangga'): #jika serangga
+            subj = Vertex(URL+"#"+index)
+            for i in takson_to_embedd:
+                    id_takson=data[keindo[i]].replace(' ','-')#.split('_')[0]
+                    obj = Vertex((URL+"#"+id_takson))
+                    pred = Vertex((URL+"#"+i), predicate=True, vprev=subj, vnext=obj)
+                    CUSTOM_KG.add_walk(subj, pred, obj)
+    # CUSTOM_KG.literals=[
+    #         [f"{URL}#taxon_path_ids"],
+    #     ]
+    CUSTOM_KG.literals = [[URL+"#"+i] for i in takson_to_embedd]

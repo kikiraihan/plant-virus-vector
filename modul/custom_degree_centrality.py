@@ -57,7 +57,7 @@ def bfs_relasi_virus_utama_langsung_dan_melalui_tanaman(gnx, serangga_to_search,
 
 
 # dari networkx dicustom
-def degree_centrality_custom(G,virus_utama_ids,serangga_ids):
+def degree_centrality_custom(G,virus_utama_ids,serangga_ids, print_relasi=True):
     """
     Parameters
     ----------
@@ -80,7 +80,7 @@ def degree_centrality_custom(G,virus_utama_ids,serangga_ids):
     centrality = {}
     for n, d in G.degree(serangga_ids):
         _relasi_virus = bfs_relasi_virus_utama_langsung_dan_melalui_tanaman(G,n,virus_utama_ids)
-        if(_relasi_virus['sum']>0):
+        if(_relasi_virus['sum']>0 and print_relasi):
             print(node_data[n]['label'],n,'| degree:',d,'| langsung:',_relasi_virus['langsung'],'| melalui tanaman:',_relasi_virus['melalui_tanaman'])
         centrality[n] = s * d *  _relasi_virus['langsung'] * (1+_relasi_virus['melalui_tanaman']) #(CM * w1 * w2) # 
 

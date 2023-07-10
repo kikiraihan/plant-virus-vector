@@ -10,6 +10,7 @@ from modul.preprocess import cleaning, splitInteractionToNodeEdge
 from modul.filterNodeEdge import removeNodeAndEdgeByFilter,takeNodeAndEdgeByFilter,removeEdgesNotInNodes
 from modul.helper_umum import contains_string_entire_column,contains_string_entire_column_boolean
 from modul.vectorReferenced import get_taxon_vector,cek_ncbi_id_by_wiki_id_via_string
+from handlers.praproses_dari_proses import pra_proses_dari_proses
 
 def report_back(progress,message):
     data=json.dumps({
@@ -323,6 +324,8 @@ def praproses(virus_txt):
     # masukan tanda virus utama
     df_node.loc[df_node.taxon_id.isin(virus_utama), ['virus_utama']] = True
 
+    df_node, df_edge = pra_proses_dari_proses(df_node, df_edge)
+
     #12
     yield report_back(98,'save file')
     # akhir pra proses
@@ -331,6 +334,7 @@ def praproses(virus_txt):
     # format orientasi # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.to_json.html
     # orient="split" cocok dengan dataframe js.
     result = json.dumps({
+        'status':200,
         'message': 'Kirim json', 
         'df_node':df_node.to_json(orient="split"),
         'df_edge':df_edge.to_json(orient="split"),

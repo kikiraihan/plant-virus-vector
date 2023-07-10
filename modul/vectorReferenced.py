@@ -54,6 +54,12 @@ def cek_ncbi_id_by_wiki_id_via_string(acuan_):
 
 # untuk vector
 def get_taxon_vector(acuan_, endpoint_url, taxon_indonesia=True):
+    # input 
+    # acuan_ = 'Aphididae' (string)
+    # endpoint_url = 'https://query.wikidata.org/sparql' (string)
+    # taxon_indonesia = True (boolean)
+    # output
+    # [('family', 'NCBI:27482_Aphididae'), ...]
     cek = cek_ncbi_id_by_wiki_id_via_string(acuan_) #(Aphididae, family, NCBI:27482)
     if not cek:
         return False

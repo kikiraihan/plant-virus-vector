@@ -23,7 +23,7 @@ def pie_proporsi(df_node):
     return fig.show()
 
 # tidak terpakai
-def plotly_graph(G):
+def plotly_graph(G,isShowlegend=False):
     # G = _set_networkx_graph(df_node, df_edge)
     pos = nx.nx_agraph.graphviz_layout(G, prog="neato", args="")
 
@@ -35,7 +35,7 @@ def plotly_graph(G):
         layout=go.Layout(
             title='Network graph made with Python',
             titlefont_size=16,
-            showlegend=False,
+            showlegend=isShowlegend,
             hovermode='closest',
             margin={
                 'b':20,'l':5,'r':5,'t':40
@@ -105,7 +105,7 @@ def _buat_tracer(G,pos):
 
 
 
-def embeddingPlot(embeddings, list_of_entities, dictionary_serangga):
+def embeddingPlot(embeddings, list_of_entities, dictionary_serangga, height=650, width=400):
     # Reduce the dimensions of entity embeddings to represent them in a 2D plane.
     X = UMAP().fit_transform(embeddings)
     df_umap=pd.DataFrame(X,columns=['feature-vector-1','feature-vector-2'])
@@ -129,7 +129,24 @@ def embeddingPlot(embeddings, list_of_entities, dictionary_serangga):
     fig = px.scatter(df_umap, x='feature-vector-1',y='feature-vector-2',text='text',hover_name='labels')
     fig.update_traces(textposition='top center')
     fig.update_layout(
-        height=650,
-        title_text='reduced word2vec visualization'
+        height=height,
+        width=width,
+        title_text='reduced word2vec visualization',
+        xaxis={
+            'title':{
+                'text':'Feature Vector 1', 'font':{
+                    'size':20
+                }
+            },
+            'tickfont':{'size':20},
+        },
+        yaxis={
+            'title':{
+                'text':'Feature Vector 2', 'font':{
+                    'size':20
+                }
+            },
+            'tickfont':{'size':20},
+        },
     )
     return fig.show()

@@ -54,7 +54,7 @@ def get_data_to_count():
     df_edge = pd.read_json(json.dumps(split_edge), orient='split')
     return proses(df_node,df_edge,acuan_)
 
-@app.route('proses/get_taxonomy_from_string', methods=["POST"])
+@app.route('/proses/get_taxonomy_from_string', methods=["POST"])
 def get_taxonomy_from_string():
     data = request.get_json()
     _virus = data['virus']

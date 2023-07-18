@@ -34,7 +34,7 @@ def getDescendant(id_globi, endpoint_url):
     return kembalian
 
 def getTaxonomy(id_globi, endpoint_url):
-    id_ncbi=id_globi.split(':')[-1]
+    id_ncbi=id_globi.split(':')[-1].strip()
     query="""
     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
     PREFIX owl: <http://www.w3.org/2002/07/owl#>

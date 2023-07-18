@@ -107,9 +107,9 @@ def get_taxonomy_from_string_handler(virus_name):
     data = get_taxon_vector(virus_name,ncbi_ontology_url,False)
     if data == False:
         return {
-            'status': '403',
+            'status': '404',
             'message': 'Tidak ditemukan taksonomi',
-            'taxonomy': data,
+            'taxonomy': None,
         }
     data = dict(data)
     return {

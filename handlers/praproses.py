@@ -56,6 +56,8 @@ def praproses(virus_txt):
     print('layer 1 pertama',virus_search[0][1].split('_'))
     link="https://api.globalbioticinteractions.org/interaction?sourceTaxon="+virus_search[0][1].split('_')[0]+"&interactionType="+interactionType+"&fields="+(','.join(kolom))
     response = requests.get(link)
+    if response.status_code==500:
+        print('ADA ERROR DARI SERVER GLOBI')
     res=response.json()
     if not res['data']:
         print(virus_search, ': kosong dari GloBI')

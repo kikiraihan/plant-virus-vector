@@ -38,6 +38,8 @@ def getDFMusuhAlami(search, url_ncbi_endpoint='http://localhost:3030/mydataset/q
     interactionType="hostOf"
     link="https://api.globalbioticinteractions.org/interaction?sourceTaxon="+search+"&interactionType="+interactionType+"&fields="+(','.join(kolom))
     response = requests.get(link)
+    if response.status_code==500:
+        print('ADA ERROR DARI SERVER GLOBI')
     res=response.json()
     if not res['data']:
         return None,None

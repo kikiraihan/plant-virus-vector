@@ -1,0 +1,24 @@
+# source / create new py env if not exist
+
+#!/bin/bash
+
+# Define the path to the virtual environment
+venv_dir="venv_3816"
+
+cd /app
+
+# Check if the virtual environment exists
+if [ -d "$venv_dir" ]; then
+  echo "Using existing virtual environment."
+else
+  echo "Creating a new virtual environment."
+  python -m venv $venv_dir
+fi
+
+# Activate the virtual environment
+source $venv_dir/bin/activate
+
+# Install required Python packages
+pip install -r requirements.txt
+
+python3 app.py | tee -a dmy-api.log

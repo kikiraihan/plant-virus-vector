@@ -22,5 +22,7 @@ python -m pip install --upgrade pip
 
 # Install required Python packages
 pip install -r requirements.txt
-
 python3 app.py | tee -a dmy-api.log
+
+# trick: keep container running
+while true; do sleep 1; done

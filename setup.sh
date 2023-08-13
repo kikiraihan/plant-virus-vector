@@ -3,7 +3,8 @@
 #!/bin/bash
 
 # Define the path to the virtual environment
-venv_dir="/app/venv_3816"
+# venv_dir="/app/venv_3816"
+venv_dir="/app/venv_3114"
 
 cd /app
 
@@ -21,7 +22,8 @@ source $venv_dir/bin/activate
 python -m pip install --upgrade pip
 
 # Install required Python packages
-pip install -r requirements.txt
+# pip install -r requirements.txt
+pip install -r r2.txt
 python3 app.py | tee -a dmy-api.log
 
 # trick: keep container running

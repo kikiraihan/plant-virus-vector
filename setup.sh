@@ -18,6 +18,8 @@ fi
 # Activate the virtual environment
 source $venv_dir/bin/activate
 
+python -m pip install --upgrade pip
+
 # Install required Python packages
 pip install -r requirements.txt
 

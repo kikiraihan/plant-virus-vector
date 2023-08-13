@@ -3,7 +3,7 @@
 #!/bin/bash
 
 # Define the path to the virtual environment
-venv_dir="venv_3816"
+venv_dir="/app/venv_3816"
 
 cd /app
 

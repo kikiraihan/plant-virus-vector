@@ -4,7 +4,7 @@
 
 # Define the path to the virtual environment
 # venv_dir="/app/venv_3816"
-venv_dir="/app/venv_3114"
+venv_dir="/app/venv3114"
 
 cd /app
 

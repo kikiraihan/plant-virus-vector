@@ -1,5 +1,11 @@
 from flask import Flask, Response, request, jsonify
 from flask_cors import CORS
+
+import dotenv
+import os
+
+dotenv.load_dotenv()
+
 from handlers.praproses import praproses
 from handlers.proses import proses, get_taxonomy_from_string_handler
 from handlers.visualisasi import get_pos_and_nx_data,get_embeddings_entities_and_dict_insect

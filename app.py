@@ -1,10 +1,10 @@
 from flask import Flask, Response, request, jsonify
 from flask_cors import CORS
 
-import dotenv
+from dotenv import load_dotenv
 import os
 
-dotenv.load_dotenv()
+load_dotenv()
 
 from handlers.praproses import praproses
 from handlers.proses import proses, get_taxonomy_from_string_handler

@@ -7,3 +7,4 @@
 venv*
 [Dd]ummy*
 [Dd]my*
+.env

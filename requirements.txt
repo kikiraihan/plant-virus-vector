@@ -1,3 +1,4 @@
+python-dotenv
 flask-cors
 sparqlwrapper==2.0.0
 umap-learn

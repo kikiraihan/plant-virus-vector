@@ -1,5 +1,11 @@
 from flask import Flask, Response, request, jsonify
 from flask_cors import CORS
+
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
 from handlers.praproses import praproses
 from handlers.proses import proses, get_taxonomy_from_string_handler
 from handlers.visualisasi import get_pos_and_nx_data,get_embeddings_entities_and_dict_insect
@@ -113,4 +119,4 @@ def enhancement_relatives(ncbi_taxon_id):
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port="8009")
+    app.run(host="0.0.0.0", port="8009", debug=True)

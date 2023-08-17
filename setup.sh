@@ -24,6 +24,7 @@ python -m pip install --upgrade pip
 # Install required Python packages
 # pip install -r requirements.txt
 pip install -r r2.txt
+# install graphviz for pygraphviz
 sudo apt install graphviz graphviz-dev
 pip install pygraphviz
 

@@ -31,7 +31,7 @@ def praproses(virus_txt):
     tipe_interaksi_tanaman = 'hostOf' #hasPathogen, pake relasi hostOf lebih dapat banyak relasi dari pada hasPathogen
     tipe_interaksi_serangga_ke_tanaman = 'hasHost' 
     tipe_interaksi_serangga_ke_virus = 'hostOf' 
-    ncbi_server_url = f'{JENA_URL_MAINDB}query'
+    ncbi_server_url = f'{JENA_URL_MAINDB}/query'
 
     virus_search = get_taxon_vector(virus_txt,ncbi_server_url)
     if (virus_search==False):
@@ -116,7 +116,7 @@ def praproses(virus_txt):
     df_node,df_edge = update_df_pake_path_ujung(df_node,df_edge)
     #tambah kolom takson pake data NCBI
     df_node = buat_kolom_taxon_awal(df_node) #buat kolom taxon, default none
-    df_node = addTaxonColumn(df_node,f'{JENA_URL_MAINDB}query') # isi pake ncbi
+    df_node = addTaxonColumn(df_node,f'{JENA_URL_MAINDB}/query') # isi pake ncbi
 
 
 
@@ -250,7 +250,7 @@ def praproses(virus_txt):
     node_to_add,edge_to_add = update_df_pake_path_ujung(node_to_add, edge_to_add)
     # tambah kolom takson pake data NCBI
     node_to_add = buat_kolom_taxon_awal(node_to_add) #buat kolom taxon, isi none dan isi dari path
-    node_to_add = addTaxonColumn(node_to_add,f'{JENA_URL_MAINDB}query') #isi kolom taxon, pake NCBI
+    node_to_add = addTaxonColumn(node_to_add,f'{JENA_URL_MAINDB}/query') #isi kolom taxon, pake NCBI
 
 
 

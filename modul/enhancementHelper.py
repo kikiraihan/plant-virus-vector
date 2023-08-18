@@ -15,8 +15,7 @@ from modul.disambiguation_optimized import __querying
 JENA_URL = os.environ.get("JENA_URL")
 JENA_URL_MAINDB = os.environ.get("JENA_URL_MAINDB")
 
-def getDFMusuhAlami(search, url_ncbi_endpoint='http://localhost:3030/mydataset/query'):
-    url_ncbi_endpoint = f'{JENA_URL_MAINDB}query'
+def getDFMusuhAlami(search, url_ncbi_endpoint = f'{JENA_URL_MAINDB}/query'):
     # parameter
     # search --> string nama serangga: bemisia, atau kode ncbi : NCBI:7038
     # url_ncbi_endpoint='http://localhost:3030/mydataset/query' --> string url endpoint sparql ncbi
@@ -240,8 +239,8 @@ def getAbstract(wd_id):
     return hasil['results']['bindings'][0]['abstract']['value']
 
 
-def getSeranggaKerabatNCBI(taxon_id="NCBI:7038", endpoint_url='http://localhost:3030/mydataset/query'):
-    endpoint_url = f"{JENA_URL_MAINDB}query"
+def getSeranggaKerabatNCBI(taxon_id="NCBI:7038", endpoint_url = f"{JENA_URL_MAINDB}/query"):
+    
     try:
         one_level_parent=getTaxonomy(taxon_id,endpoint_url)[1][2]
         data=getDescendant(one_level_parent, endpoint_url)

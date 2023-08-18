@@ -68,9 +68,8 @@ def getTaxonomy(id_globi, endpoint_url):
 	
 	return kembalian
 
-def addTaxonColumn(node, endpoint_url='http://localhost:3030/mydataset/query'): # node adalah dataframe, obo adalah kelas ontology NCBI
+def addTaxonColumn(node, endpoint_url = f"{JENA_URL_MAINDB}/query"): # node adalah dataframe, obo adalah kelas ontology NCBI
 	# masih per baris data
-	endpoint_url = f"{JENA_URL_MAINDB}query"
 	data={}
 	for idx,row in node[node["taxon_id"].str.contains("NCBI")].iterrows():
 		for nama,rank,kode in getTaxonomy(row.taxon_id, endpoint_url):

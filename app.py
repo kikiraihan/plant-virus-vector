@@ -1,5 +1,6 @@
 from flask import Flask, Response, request, jsonify
 from flask_cors import CORS
+#from flask_sslify import SSLify
 
 from dotenv import load_dotenv
 import os
@@ -16,6 +17,9 @@ import pandas as pd
 
 app = Flask(__name__)
 CORS(app)
+
+#if not app.debug and not app.testing:
+#    sslify = SSLify(app)
 
 @app.route("/")
 def index():
@@ -120,3 +124,7 @@ def enhancement_relatives(ncbi_taxon_id):
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port="8009", debug=True)
+
+# pakai SSL
+#if __name__ == "__main__":
+#    app.run(host="0.0.0.0", port="8009", ssl_context=('certificate_ssl/cert.pem', 'certificate_ssl/key.pem'),debug=True)

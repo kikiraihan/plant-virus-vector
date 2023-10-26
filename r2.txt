@@ -1,3 +1,4 @@
+flask-SSLify
 flask-cors
 sparqlwrapper
 umap-learn

@@ -92,7 +92,10 @@ def proses(df_node,df_edge,acuan_):
     # scaling ed_result
     data_to_count['ed_result_scaled'] = minmax(data_to_count['ed_result'])
     # scaling dc 
-    data_to_count['dc_result_scaled'] = minmax(data_to_count['dc_result'])
+    if data_to_count['dc_result'].max() == data_to_count['dc_result'].min():
+        data_to_count['dc_result_scaled'] = data_to_count['dc_result']
+    else:
+        data_to_count['dc_result_scaled'] = minmax(data_to_count['dc_result'])
 
     #9 #hitung kombinasi
     data_to_count['result'] = (1+data_to_count['dc_result_scaled']) / (1+data_to_count['ed_result_scaled'])

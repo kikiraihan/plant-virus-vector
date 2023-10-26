@@ -44,7 +44,7 @@ data_init=[
 
 # %%
 #0 inisiasi parameter
-ini_data=data_init[14]
+ini_data=data_init[3]
 # parameter
 nama_file = ini_data[0]
 virus_txt = ini_data[1].replace(' ','%20')
@@ -143,56 +143,57 @@ df_node,df_edge = removeNodeAndEdgeByFilter(df_node[filter_kingdom_atau_class_nu
 
 # %%
 # inisiasi
-df_init=pd.DataFrame(columns = kolom)
+df_to_add=pd.DataFrame(columns = kolom)
 
 #4.1 BFS interaksi tanaman --hostOf-> serangga dan virus
 df_plant=df_node[df_node.kingdom=='NCBI:33090_Viridiplantae']
-interactionType=tipe_interaksi_tanaman
-list_source_taxon=[]
-for idx,i in tqdm(df_plant.iterrows(), total=df_plant.shape[0]):
-    search=i.taxon_name.replace(' ','%20')
-    list_source_taxon.append(search)
-list_source_taxon = list(set(list_source_taxon)) #unique
-text_source_taxon = "sourceTaxon=" + "&sourceTaxon=".join(list_source_taxon)
-list_target_taxon = list_source_taxon_virus + ['Insecta']
-text_target_taxon = "&targetTaxon=" + "&targetTaxon=".join(list_target_taxon)
+if not df_plant.empty:
+    interactionType=tipe_interaksi_tanaman
+    list_source_taxon=[]
+    for idx,i in tqdm(df_plant.iterrows(), total=df_plant.shape[0]):
+        search=i.taxon_name.replace(' ','%20')
+        list_source_taxon.append(search)
+    list_source_taxon = list(set(list_source_taxon)) #unique
+    text_source_taxon = "sourceTaxon=" + "&sourceTaxon=".join(list_source_taxon)
+    list_target_taxon = list_source_taxon_virus + ['Insecta']
+    text_target_taxon = "&targetTaxon=" + "&targetTaxon=".join(list_target_taxon)
 
 
-# pencarian data
-link="https://api.globalbioticinteractions.org/interaction?"+text_source_taxon+"&interactionType="+interactionType+text_target_taxon+"&fields="+(','.join(kolom))+"taxonIdPrefix=NCBI"
-print(link)
-df_to_add = pagination_search_globi(link, df_init, offset_limit)
+    # pencarian data
+    link="https://api.globalbioticinteractions.org/interaction?"+text_source_taxon+"&interactionType="+interactionType+text_target_taxon+"&fields="+(','.join(kolom))+"taxonIdPrefix=NCBI"
+    print(link)
+    df_to_add = pagination_search_globi(link, df_to_add, offset_limit)
 
 # %%
 #4.2 BFS interaksi serangga --pathogenOf-> tanaman
 df_insect = df_node[df_node['class']=='NCBI:50557_Insecta']
-interactionType = tipe_interaksi_serangga_ke_tanaman
-list_source_taxon=[]
-for idx,i in tqdm(df_insect.iterrows(), total=df_insect.shape[0]):
-    search=i.taxon_name.replace(' ','%20')
-    list_source_taxon.append(search)
-text_source_taxon = "sourceTaxon=" + "&sourceTaxon=".join(list_source_taxon)    
-
-# pencarian data
-link="https://api.globalbioticinteractions.org/interaction?"+text_source_taxon+"&interactionType="+interactionType+"&targetTaxon=Viridiplantae"+"&fields="+(','.join(kolom))
-print(link)
-df_to_add = pagination_search_globi(link, df_to_add, offset_limit)
+if not df_insect.empty:
+    interactionType = tipe_interaksi_serangga_ke_tanaman
+    list_source_taxon=[]
+    for idx,i in tqdm(df_insect.iterrows(), total=df_insect.shape[0]):
+        search=i.taxon_name.replace(' ','%20')
+        list_source_taxon.append(search)
+    text_source_taxon = "sourceTaxon=" + "&sourceTaxon=".join(list_source_taxon)    
+    # pencarian data
+    link="https://api.globalbioticinteractions.org/interaction?"+text_source_taxon+"&interactionType="+interactionType+"&targetTaxon=Viridiplantae"+"&fields="+(','.join(kolom))
+    print(link)
+    df_to_add = pagination_search_globi(link, df_to_add, offset_limit)
 
 # %%
 #4.3 BFS interaksi serangga --hostOf-> virus
 df_insect = df_node[df_node['class']=='NCBI:50557_Insecta']
-interactionType = tipe_interaksi_serangga_ke_virus
-list_source_taxon=[]
-for idx,i in tqdm(df_insect.iterrows(), total=df_insect.shape[0]):
-    search=i.taxon_name.replace(' ','%20')
-    list_source_taxon.append(search)
-text_source_taxon = "sourceTaxon=" + "&sourceTaxon=".join(list_source_taxon)    
-
-
-# pencarian data
-link="https://api.globalbioticinteractions.org/interaction?"+text_source_taxon+"&interactionType="+interactionType+"&targetTaxon=Viruses"+"&fields="+(','.join(kolom))
-print(link)
-df_to_add = pagination_search_globi(link, df_to_add, offset_limit)
+if not df_insect.empty:
+    interactionType = tipe_interaksi_serangga_ke_virus
+    list_source_taxon=[]
+    for idx,i in tqdm(df_insect.iterrows(), total=df_insect.shape[0]):
+        search=i.taxon_name.replace(' ','%20')
+        list_source_taxon.append(search)
+    text_source_taxon = "sourceTaxon=" + "&sourceTaxon=".join(list_source_taxon)    
+    print(df_insect)
+    # pencarian data
+    link="https://api.globalbioticinteractions.org/interaction?"+text_source_taxon+"&interactionType="+interactionType+"&targetTaxon=Viruses"+"&fields="+(','.join(kolom))
+    print(link)
+    df_to_add = pagination_search_globi(link, df_to_add, offset_limit)
 
 # %%
 #5 splitting depth 2 interaksi serangga dan tanaman

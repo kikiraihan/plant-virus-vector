@@ -191,8 +191,9 @@ def splitInteractionToNodeEdge(df):
 def pagination_search_globi(rawlink, df_to_concat, offset_limit=20):
     print('mulai pencarian BFS GloBI')
     offset=0
+    loop=1
     while True:
-        print('offset : ', offset)
+        print('offset ke', loop, ' : ', offset)
         link= rawlink + "&offset="+str(offset)
         response = requests.get(link)
         res=response.json()
@@ -219,5 +220,6 @@ def pagination_search_globi(rawlink, df_to_concat, offset_limit=20):
             break
         # update offset
         offset+=1024
+        loop+=1
 
     return df_to_concat

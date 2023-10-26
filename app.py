@@ -46,6 +46,7 @@ def submit():
 
 @app.route('/praproses/<virus>')
 def praproses_endpoint(virus):
+    virus = virus.lower()
     hasil = mongodb.praproses.find_one({"key": virus})
     # jika tidak ada cache
     if hasil is None:

@@ -11,3 +11,4 @@ venv*
 [Dd]ummy*
 [Dd]my*
 .env
+.DS_Store

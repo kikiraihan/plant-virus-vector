@@ -11,6 +11,7 @@ from modul.filterNodeEdge import removeNodeAndEdgeByFilter,takeNodeAndEdgeByFilt
 from modul.helper_umum import contains_string_entire_column,contains_string_entire_column_boolean
 from modul.vectorReferenced import get_taxon_vector,cek_ncbi_id_by_wiki_id_via_string
 from handlers.praproses_dari_proses import pra_proses_dari_proses
+from datetime import datetime
 
 JENA_URL = os.environ.get("JENA_URL")
 JENA_URL_MAINDB = os.environ.get("JENA_URL_MAINDB")
@@ -22,9 +23,22 @@ def report_back(progress,message):
         })
     return f'data: {data}\n\n'
 
-def praproses(virus_txt):
+
+def praproses_from_cache(from_db):
+    del from_db["_id"]
+    result = json.dumps({
+        'status':200,
+        "progress":100,
+        'message': 'got from mongodb cache, fetch date: '+ from_db['date'].strftime("%b %d %Y %H:%M:%S"), 
+        'df_node': from_db['node'],
+        'df_edge': from_db['edge'],
+    })
+
+    yield f'data: {(result)}\n\n'
+
+def praproses(virus_txt, mongodb):
     # 0 parameter
-    yield report_back(5,'inisiasi parameter')
+    yield report_back(5,'parameter initiation')
     nama_file = "tes"
     virus_txt = virus_txt.replace(' ','%20')
     tipe_interaksi_virus = 'hasHost' #pathogenOf, pake relasi hasHost lebih dapat banyak relasi dari pada pathogenOf
@@ -84,7 +98,7 @@ def praproses(virus_txt):
 
     df.columns = kolom
 
-    yield report_back(20,'Splitting layer 1 interaksi virus')
+    yield report_back(20,'Splitting layer 1 virus interactions')
     #2 splitting layer 1 interaksi virus
     df_node, df_edge = splitInteractionToNodeEdge(df)
 
@@ -107,7 +121,7 @@ def praproses(virus_txt):
     virus_utama=[data.taxon_id for idx,data in df_node[filter_virus_utama].iterrows()]
 
 
-    yield report_back(30,'disambiguasi layer 1 interaksi virus, ini akan memakan waktu sedikit lama')
+    yield report_back(30,'disambiguation layer 1 virus interactions, please wait this will take a little time')
     #3 disambiguasi layer 1 interaksi virus
     kamus_ncbi = buat_kamus_kosong(df_node)
     kamus_ncbi = update_kamus_pake_wikidata(kamus_ncbi)
@@ -129,7 +143,7 @@ def praproses(virus_txt):
 
 
 
-    yield report_back(40,'BFS interaksi tanaman')
+    yield report_back(40,'BFS plant interactions')
     #4.1 BFS interaksi tanaman
     df_to_add=pd.DataFrame(columns = kolom)
     df_plant=df_node[df_node.kingdom=='NCBI:33090_Viridiplantae']
@@ -154,7 +168,7 @@ def praproses(virus_txt):
 
 
 
-    yield report_back(45,'BFS interaksi serangga -> tanaman')
+    yield report_back(45,'BFS interactions: insect -> plant')
     #4.2 BFS interaksi serangga -> tanaman
     df_insect = df_node[df_node['class']=='NCBI:50557_Insecta']
     interactionType = tipe_interaksi_serangga_ke_tanaman
@@ -178,7 +192,7 @@ def praproses(virus_txt):
 
 
 
-    yield report_back(48,'BFS interaksi serangga -> virus')
+    yield report_back(48,'BFS interactions insects -> viruses')
     #4.3 BFS interaksi serangga -> virus
     df_insect = df_node[df_node['class']=='NCBI:50557_Insecta']
     interactionType = tipe_interaksi_serangga_ke_virus
@@ -202,7 +216,7 @@ def praproses(virus_txt):
 
 
 
-    yield report_back(50,'splitting depth 2 interaksi serangga dan tanaman')
+    yield report_back(50,'splitting depth 2 interactions between insects and plants')
     #5 splitting depth 2 interaksi serangga dan tanaman
     node_to_add, edge_to_add = splitInteractionToNodeEdge(df_to_add)
 
@@ -241,7 +255,7 @@ def praproses(virus_txt):
 
 
 
-    yield report_back(60,'disambiguasi layer 2, ini akan memakan waktu sedikit lama')
+    yield report_back(60,'disambiguation layer 2, this will take a little time')
     # 6 disambiguasi layer 2
     kamus_ncbi = buat_kamus_kosong(node_to_add)
     kamus_ncbi = update_kamus_pake_wikidata(kamus_ncbi)
@@ -259,14 +273,14 @@ def praproses(virus_txt):
 
 
 
-    yield report_back(70,'konkatenasi tabel')
+    yield report_back(70,'table concatenation')
     #7 konkatenasi tabel
     df_node=pd.concat([df_node,node_to_add], axis=0, ignore_index=True)
     df_edge=pd.concat([df_edge,edge_to_add], axis=0, ignore_index=True)
 
 
 
-    yield report_back(80,'praproses tambahan')
+    yield report_back(80,'additional preprocessing')
     # praproses tambahan
     # hapus duplikat
     df_node.drop_duplicates(inplace=True)
@@ -334,17 +348,24 @@ def praproses(virus_txt):
     #12
     yield report_back(98,'save file')
     # akhir pra proses
+    # save to mongodb
+    mongodb.praproses.insert_one({
+        "key": virus_txt.replace('%20',' '),
+        "date": datetime.utcnow(),
+        "node": df_node.to_json(orient="split"),
+        "edge": df_edge.to_json(orient="split"),
+    })
     # save file
     # Mengirimkan data hasil proses sebagai respons JSON
     # format orientasi # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.to_json.html
     # orient="split" cocok dengan dataframe js.
     result = json.dumps({
         'status':200,
-        'message': 'Kirim json', 
+        'message': 'Send json', 
         'df_node':df_node.to_json(orient="split"),
         'df_edge':df_edge.to_json(orient="split"),
         })
     yield f'data: {(result)}\n\n'
 
     # selesai
-    yield report_back(100,'selesai')
+    yield report_back(100,'finished')

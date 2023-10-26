@@ -1,3 +1,5 @@
+pymongo[srv]
+Flask-PyMongo
 flask-SSLify
 flask-cors
 sparqlwrapper

@@ -1,13 +1,16 @@
 from flask import Flask, Response, request, jsonify
 from flask_cors import CORS
 #from flask_sslify import SSLify
+# from flask_pymongo import PyMongo
+import pymongo
+from pymongo import MongoClient
 
 from dotenv import load_dotenv
 import os
 
 load_dotenv()
 
-from handlers.praproses import praproses
+from handlers.praproses import praproses, praproses_from_cache
 from handlers.proses import proses, get_taxonomy_from_string_handler
 from handlers.visualisasi import get_pos_and_nx_data,get_embeddings_entities_and_dict_insect
 from handlers.praproses_dari_proses import pra_proses_dari_proses
@@ -18,8 +21,20 @@ import pandas as pd
 app = Flask(__name__)
 CORS(app)
 
+# setup mongodb
+# app.config['SECRET_KEY'] = "86489870e181fd9be072f782b9742b8b"
+# app.config['MONGO_URI'] = 
+# mongodb_client = PyMongo(app, uri="mongodb://admin:admin123@localhost:27017/?authMechanism=DEFAULT")
+# mongodb_client = PyMongo(app, uri="mongodb://localhost:27017/thesisdbmongo")
+# mongodb = mongodb_client.db
+client = MongoClient('mongodb://admin:admin123@localhost:27017/?authMechanism=DEFAULT')
+mongodb = client["thesisdbmongo"]
+
+
 #if not app.debug and not app.testing:
 #    sslify = SSLify(app)
+
+
 
 @app.route("/")
 def index():
@@ -31,7 +46,12 @@ def submit():
 
 @app.route('/praproses/<virus>')
 def praproses_endpoint(virus):
-    return Response(praproses(virus), mimetype='text/event-stream')
+    hasil = mongodb.praproses.find_one({"key": virus})
+    # jika tidak ada cache
+    if hasil is None:
+        return Response(praproses(virus, mongodb), mimetype='text/event-stream')
+    
+    return Response(praproses_from_cache(hasil), mimetype='text/event-stream')
 
 
 @app.route('/visualisasi/pos', methods=["POST"])

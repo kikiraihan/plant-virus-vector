@@ -6,7 +6,7 @@ import os, json
 
 from modul.standardization_usingsparql import addTaxonColumn, buat_kolom_taxon_awal
 from modul.disambiguation_optimized import buat_kamus_kosong, update_kamus_pake_wikidata, update_df_pake_kamus, update_df_pake_path_ujung, removeOtherThanNCBI
-from modul.preprocess import cleaning, splitInteractionToNodeEdge
+from modul.preprocess import cleaning, splitInteractionToNodeEdge, pagination_search_globi
 from modul.filterNodeEdge import removeNodeAndEdgeByFilter,takeNodeAndEdgeByFilter,removeEdgesNotInNodes
 from modul.helper_umum import contains_string_entire_column,contains_string_entire_column_boolean
 from modul.vectorReferenced import get_taxon_vector,cek_ncbi_id_by_wiki_id_via_string
@@ -46,6 +46,7 @@ def praproses(virus_txt, mongodb):
     tipe_interaksi_serangga_ke_tanaman = 'hasHost' 
     tipe_interaksi_serangga_ke_virus = 'hostOf' 
     ncbi_server_url = f'{JENA_URL_MAINDB}/query'
+    offset_limit=100
 
     virus_search = get_taxon_vector(virus_txt,ncbi_server_url)
     if (virus_search==False):
@@ -68,35 +69,25 @@ def praproses(virus_txt, mongodb):
         'target_taxon_path_ids',
         'target_taxon_path_ranks',
     ]
-
     interactionType=tipe_interaksi_virus
-    print('layer 1 pertama',virus_search[0][1].split('_'))
-    link="https://api.globalbioticinteractions.org/interaction?sourceTaxon="+virus_search[0][1].split('_')[0]+"&interactionType="+interactionType+"&fields="+(','.join(kolom))
-    response = requests.get(link)
-    if response.status_code==500:
-        print('ADA ERROR DARI SERVER GLOBI')
-    res=response.json()
-    if not res['data']:
-        print(virus_search, ': kosong dari GloBI')
-    # JSON To Pandas Dataframe
-    df = pd.json_normalize(res, record_path =['data'])
 
-    if(len(virus_search) == 1):
-        pass
-    elif(virus_search[1][0] not in ['famili','genus']):
-        pass
-    else:
-        print('layer 1 kedua',virus_search[1][1].split('_')) # yg kedua dari famili atau genusnya.
-        link="https://api.globalbioticinteractions.org/interaction?sourceTaxon="+virus_search[1][1].split('_')[0]+"&interactionType="+interactionType+"&fields="+(','.join(kolom))
-        response = requests.get(link)
-        res=response.json()
-        if not res['data']:
-            print('kosong')
-        # JSON To Pandas Dataframe
-        df_ = pd.json_normalize(res, record_path =['data'])
-        df=pd.concat([df,df_],ignore_index=True)
+    # inisiasi dataframe
+    df_init=pd.DataFrame(columns = kolom)
 
-    df.columns = kolom
+    # list pencarian
+    list_source_taxon_virus = []
+    for i in range(len(virus_search)):
+        if (
+            virus_search[i][0] in ['famili','genus','spesies'] and 
+            len(list_source_taxon_virus) < 2 # maksimal 2 pencarian
+        ):
+            search = virus_search[i][1].split('_')[0]
+            list_source_taxon_virus.append(search)
+    text_source_taxon = "sourceTaxon=" + "&sourceTaxon=".join(list_source_taxon_virus)
+
+    # pencarian data
+    link="https://api.globalbioticinteractions.org/interaction?"+text_source_taxon+"&interactionType="+interactionType+"&targetTaxon=Viridiplantae&targetTaxon=Insecta"+"&fields="+(','.join(kolom))
+    df = pagination_search_globi(link, df_init, offset_limit)
 
     yield report_back(20,'Splitting layer 1 virus interactions')
     #2 splitting layer 1 interaksi virus
@@ -142,29 +133,26 @@ def praproses(virus_txt, mongodb):
     df_node,df_edge = removeNodeAndEdgeByFilter(df_node[filter_kingdom_atau_class_null], df_node,df_edge)
 
 
+    df_init=pd.DataFrame(columns = kolom)
 
     yield report_back(40,'BFS plant interactions')
     #4.1 BFS interaksi tanaman
-    df_to_add=pd.DataFrame(columns = kolom)
     df_plant=df_node[df_node.kingdom=='NCBI:33090_Viridiplantae']
     interactionType=tipe_interaksi_tanaman
+    list_source_taxon=[]
     for idx,i in tqdm(df_plant.iterrows(), total=df_plant.shape[0]):
         search=i.taxon_name.replace(' ','%20')
-        # print('depth 2 tanaman :', search)
-        link="https://api.globalbioticinteractions.org/interaction?sourceTaxon="+search+"&interactionType="+interactionType+"&fields="+(','.join(kolom))
-        response = requests.get(link)
-        res=response.json()
-        if not res['data']:
-            print(i.taxon_name, ': kosong dari GloBI')
-            continue
-        # JSON To Pandas Dataframe
-        temp_to_add=pd.json_normalize(res, record_path =['data'])
-        temp_to_add.columns = kolom
-        # add to sebelumnya
-        df_to_add = pd.concat([
-            df_to_add,
-            temp_to_add
-        ], ignore_index = True)
+        list_source_taxon.append(search)
+    list_source_taxon = list(set(list_source_taxon)) #unique
+    text_source_taxon = "sourceTaxon=" + "&sourceTaxon=".join(list_source_taxon)
+    list_target_taxon = list_source_taxon_virus + ['Insecta']
+    text_target_taxon = "&targetTaxon=" + "&targetTaxon=".join(list_target_taxon)
+
+
+    # pencarian data
+    link="https://api.globalbioticinteractions.org/interaction?"+text_source_taxon+"&interactionType="+interactionType+text_target_taxon+"&fields="+(','.join(kolom))+"taxonIdPrefix=NCBI"
+    print(link)
+    df_to_add = pagination_search_globi(link, df_init, offset_limit)
 
 
 
@@ -172,23 +160,15 @@ def praproses(virus_txt, mongodb):
     #4.2 BFS interaksi serangga -> tanaman
     df_insect = df_node[df_node['class']=='NCBI:50557_Insecta']
     interactionType = tipe_interaksi_serangga_ke_tanaman
+    list_source_taxon=[]
     for idx,i in tqdm(df_insect.iterrows(), total=df_insect.shape[0]):
         search=i.taxon_name.replace(' ','%20')
-        # print('depth 2 tanaman :', search)
-        link="https://api.globalbioticinteractions.org/interaction?sourceTaxon="+search+"&interactionType="+interactionType+"&fields="+(','.join(kolom))
-        response = requests.get(link)
-        res=response.json()
-        if not res['data']:
-            print(i.taxon_name, ': kosong dari GloBI')
-            continue
-        # JSON To Pandas Dataframe
-        temp_to_add=pd.json_normalize(res, record_path =['data'])
-        temp_to_add.columns = kolom
-        # add to sebelumnya
-        df_to_add = pd.concat([
-            df_to_add,
-            temp_to_add
-        ], ignore_index = True)
+        list_source_taxon.append(search)
+    text_source_taxon = "sourceTaxon=" + "&sourceTaxon=".join(list_source_taxon)    
+    # pencarian data
+    link="https://api.globalbioticinteractions.org/interaction?"+text_source_taxon+"&interactionType="+interactionType+"&targetTaxon=Viridiplantae"+"&fields="+(','.join(kolom))
+    print(link)
+    df_to_add = pagination_search_globi(link, df_to_add, offset_limit)
 
 
 
@@ -196,23 +176,15 @@ def praproses(virus_txt, mongodb):
     #4.3 BFS interaksi serangga -> virus
     df_insect = df_node[df_node['class']=='NCBI:50557_Insecta']
     interactionType = tipe_interaksi_serangga_ke_virus
+    list_source_taxon=[]
     for idx,i in tqdm(df_insect.iterrows(), total=df_insect.shape[0]):
         search=i.taxon_name.replace(' ','%20')
-        # print('depth 2 tanaman :', search)
-        link="https://api.globalbioticinteractions.org/interaction?sourceTaxon="+search+"&interactionType="+interactionType+"&fields="+(','.join(kolom))
-        response = requests.get(link)
-        res=response.json()
-        if not res['data']:
-            print(i.taxon_name, ': kosong dari GloBI')
-            continue
-        # JSON To Pandas Dataframe
-        temp_to_add=pd.json_normalize(res, record_path =['data'])
-        temp_to_add.columns = kolom
-        # add to sebelumnya
-        df_to_add = pd.concat([
-            df_to_add,
-            temp_to_add
-        ], ignore_index = True)
+        list_source_taxon.append(search)
+    text_source_taxon = "sourceTaxon=" + "&sourceTaxon=".join(list_source_taxon)    
+    # pencarian data
+    link="https://api.globalbioticinteractions.org/interaction?"+text_source_taxon+"&interactionType="+interactionType+"&targetTaxon=Viruses"+"&fields="+(','.join(kolom))
+    print(link)
+    df_to_add = pagination_search_globi(link, df_to_add, offset_limit)
 
 
 

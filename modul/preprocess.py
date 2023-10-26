@@ -1,4 +1,5 @@
 import pandas as pd
+import requests
 
 # kalo ba update disini, bken juga di praproses tanaman
 def cleaning(data, dropNonNCBI=False):
@@ -185,3 +186,38 @@ def splitInteractionToNodeEdge(df):
     
     return df_node,df_edge
 
+
+
+def pagination_search_globi(rawlink, df_to_concat, offset_limit=20):
+    print('mulai pencarian BFS GloBI')
+    offset=0
+    while True:
+        print('offset : ', offset)
+        link= rawlink + "&offset="+str(offset)
+        response = requests.get(link)
+        res=response.json()
+        # stop
+        if not res['data']:
+            print('stop BFS: data kosong dari GloBI')
+            print('jumlah data: ' , len(res['data'])+offset)
+            break
+        # salin data
+        temp_to_add=pd.json_normalize(res, record_path =['data'])
+        temp_to_add.columns = res['columns']
+        df_to_concat = pd.concat([
+            df_to_concat,
+            temp_to_add
+        ], ignore_index = True)
+        # stop 
+        if len(res['data']) < 1024:
+            print('stop BFS: ujung data pagination')
+            print('jumlah data: ' , len(res['data'])+offset)
+            break
+        if offset/1024 >= offset_limit:
+            print('stop BFS: berhenti di offset ke ', offset_limit)
+            print('jumlah data: ' , len(res['data'])+offset)
+            break
+        # update offset
+        offset+=1024
+
+    return df_to_concat

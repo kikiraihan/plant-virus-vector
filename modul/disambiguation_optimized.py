@@ -1,5 +1,6 @@
 from SPARQLWrapper import SPARQLWrapper
 from tqdm import tqdm
+import pandas as pd
 
 def __query_text(join_ids_text, pred):
     if(pred=='iniwd'):
@@ -184,7 +185,6 @@ def update_df_pake_kamus(kamus_ncbi,df_node,df_edge,printOutput=False):
     df_edge.reset_index(drop=True,inplace=True)
     return df_node,df_edge
 
-
 def update_df_pake_path_ujung(df_node, df_edge,printOutput=False):
 
     #masking lama tida berlaku, harus update masking baru, karena dataframe baru diupdate
@@ -197,9 +197,18 @@ def update_df_pake_path_ujung(df_node, df_edge,printOutput=False):
     # update taxon_id, yang taxon_idnya bukan NCBI tapi pathnya punya NCBI
     for idx,data in df_node[(
         (df_node["taxon_id"].str.contains("NCBI")==False) & 
-        df_node["taxon_path_ids"].str.contains("NCBI")
+        (df_node["taxon_path_ids"].str.contains("NCBI"))
     )].iterrows():
-        iterkan = list(zip(data.taxon_path_ids.replace(" ","").split("|"),data.taxon_path_rank.replace(" ","").split("|")))
+        taxon_path_ids = data.taxon_path_ids.replace(" ","").split("|")
+        if pd.isna(data.taxon_path_rank):
+            taxon_path_rank = [""]*len(taxon_path_ids)
+        else:
+            taxon_path_rank = data.taxon_path_rank.replace(" ","").split("|") 
+        zipkan = zip( 
+            taxon_path_ids, 
+            taxon_path_rank
+        )
+        iterkan = list(zipkan)
         #update dengan nilai NCBI pertama dari belakang
         counter=-1
         cek = iterkan[counter]

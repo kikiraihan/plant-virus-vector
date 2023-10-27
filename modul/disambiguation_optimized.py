@@ -1,6 +1,7 @@
 from SPARQLWrapper import SPARQLWrapper
 from tqdm import tqdm
 import pandas as pd
+from modul.helper_umum import report_back
 
 def __query_text(join_ids_text, pred):
     if(pred=='iniwd'):
@@ -80,7 +81,7 @@ def buat_kamus_kosong(df_node):
     
     return kamus_ncbi
 
-def update_kamus_pake_wikidata(kamus_ncbi):
+def update_kamus_pake_wikidata(kamus_ncbi, percent=0, title="disambiguation"):
     pred={
         'GBIF':'wdt:P846',
         'EOL':'wdt:P830',
@@ -97,10 +98,18 @@ def update_kamus_pake_wikidata(kamus_ncbi):
     
     # looping
     print(list(kamus_ncbi), len(kamus_ncbi),' database, ', len(kamus_ncbi),' kali perulangan akses NCBI')
+    yield report_back(percent, 
+        title +', '
+        + str(len(kamus_ncbi)) + ' database, ' + str(len(kamus_ncbi)) +' kali perulangan akses NCBI'
+    )
     for group in list(kamus_ncbi):
 
         if group not in pred:
             print(group,': tidak diketahui predikatnya')
+            yield report_back(percent, 
+                title +', '
+                + group + ': tidak diketahui predikatnya'
+            )
             continue
 
         ids = ' '.join(["('"+i.split(":")[1]+"')" for i in list(kamus_ncbi[group])])
@@ -108,6 +117,11 @@ def update_kamus_pake_wikidata(kamus_ncbi):
         
         # kalau len <=130
         print(group,': jumlah id',len(kamus_ncbi[group])) # print(len(query))
+        yield report_back(percent, 
+            title +', '
+            + group + ': jumlah id ' + str(len(kamus_ncbi[group]))
+        )
+        
         if len(kamus_ncbi[group]) <= 130:
             hasil = __querying(endpoint_url,query,format_)
             # skip kalo kosong
@@ -118,6 +132,10 @@ def update_kamus_pake_wikidata(kamus_ncbi):
         # kalau len > 130
         else:
             print(group, ': query terlalu panjang, dilakukan chunk')
+            yield report_back(percent, 
+                title +', '
+                + group + ': query terlalu panjang, dilakukan chunk'
+            )
             for list_chunk in __chunk_list(list(kamus_ncbi[group]), 130):
                 ids = ' '.join(["('"+i.split(":")[1]+"')" for i in list_chunk])
                 query = __query_text(ids, pred[group])
@@ -134,7 +152,7 @@ def update_kamus_pake_wikidata(kamus_ncbi):
 
 
 
-def update_df_pake_kamus(kamus_ncbi,df_node,df_edge,printOutput=False):
+def update_df_pake_kamus(kamus_ncbi,df_node,df_edge, percent=0, title="disambiguation", printOutput=False):
     # masking bukan NCBI dan null 
     masking = (
         (df_node["taxon_id"].str.contains("NCBI") == False) & 
@@ -157,6 +175,10 @@ def update_df_pake_kamus(kamus_ncbi,df_node,df_edge,printOutput=False):
                     print(idx)
                     print('sebelumnya', data.taxon_id)
                     print('menjadi', isi)
+                    yield report_back(percent, 
+                        title +', '
+                        + idx + ', sebelumnya ' + data.taxon_id + ', menjadi ' + isi
+                    )
                 #node
                 df_node.loc[idx,'taxon_id'] = isi
                 #edge
@@ -179,13 +201,17 @@ def update_df_pake_kamus(kamus_ncbi,df_node,df_edge,printOutput=False):
             print(idx)
             print('sebelumnya', data.taxon_path_ids)
             print('menjadi', (" | ".join(list_isi)))
+            yield report_back(percent, 
+                title +', '
+                + idx + ', sebelumnya ' + data.taxon_path_ids + ', menjadi ' + (" | ".join(list_isi))
+            )
         df_node.loc[idx,'taxon_path_ids'] = " | ".join(list_isi)
     
     df_node.reset_index(drop=True,inplace=True)
     df_edge.reset_index(drop=True,inplace=True)
     return df_node,df_edge
 
-def update_df_pake_path_ujung(df_node, df_edge,printOutput=False):
+def update_df_pake_path_ujung(df_node, df_edge, percent=0, title="disambiguation", printOutput=False):
 
     #masking lama tida berlaku, harus update masking baru, karena dataframe baru diupdate
     #masking = ((df_node["taxon_id"].str.contains("NCBI") == False) & (df_node['taxon_id'].isnull()==False))
@@ -222,6 +248,12 @@ def update_df_pake_path_ujung(df_node, df_edge,printOutput=False):
             print(idx)
             print('sebelumnya', (data.taxon_id, data.taxon_path_rank.replace(" ","").split("|")[-1]) )
             print('menjadi', cek)
+            yield report_back(percent, 
+                title +', '
+                + idx + ', sebelumnya ' 
+                + (data.taxon_id, data.taxon_path_rank.replace(" ","").split("|")[-1]) 
+                + ', menjadi ' + str(cek)
+            )
         df_node.loc[idx,'taxon_id'] = cek[0]
         df_node.loc[idx,'taxon_rank'] = cek[1]
         df_edge.replace(

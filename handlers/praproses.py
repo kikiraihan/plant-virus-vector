@@ -8,20 +8,13 @@ from modul.standardization_usingsparql import addTaxonColumn, buat_kolom_taxon_a
 from modul.disambiguation_optimized import buat_kamus_kosong, update_kamus_pake_wikidata, update_df_pake_kamus, update_df_pake_path_ujung, removeOtherThanNCBI
 from modul.preprocess import cleaning, splitInteractionToNodeEdge, pagination_search_globi
 from modul.filterNodeEdge import removeNodeAndEdgeByFilter,takeNodeAndEdgeByFilter,removeEdgesNotInNodes
-from modul.helper_umum import contains_string_entire_column,contains_string_entire_column_boolean
+from modul.helper_umum import contains_string_entire_column,contains_string_entire_column_boolean, report_back
 from modul.vectorReferenced import get_taxon_vector,cek_ncbi_id_by_wiki_id_via_string
 from handlers.praproses_dari_proses import pra_proses_dari_proses
 from datetime import datetime
 
 JENA_URL = os.environ.get("JENA_URL")
 JENA_URL_MAINDB = os.environ.get("JENA_URL_MAINDB")
-
-def report_back(progress,message):
-    data=json.dumps({
-        "progress":progress,
-        'message':message,
-        })
-    return f'data: {data}\n\n'
 
 
 def praproses_from_cache(from_db):
@@ -87,7 +80,7 @@ def praproses(virus_txt, mongodb):
 
     # pencarian data
     link="https://api.globalbioticinteractions.org/interaction?"+text_source_taxon+"&interactionType="+interactionType+"&targetTaxon=Viridiplantae&targetTaxon=Insecta"+"&fields="+(','.join(kolom))
-    df = pagination_search_globi(link, df_init, offset_limit)
+    df = yield from pagination_search_globi(link, df_init, offset_limit, True, 10,'BFS Data virus')
 
     yield report_back(20,'Splitting layer 1 virus interactions')
     #2 splitting layer 1 interaksi virus
@@ -115,10 +108,10 @@ def praproses(virus_txt, mongodb):
     yield report_back(30,'disambiguation layer 1 virus interactions, please wait this will take a little time')
     #3 disambiguasi layer 1 interaksi virus
     kamus_ncbi = buat_kamus_kosong(df_node)
-    kamus_ncbi = update_kamus_pake_wikidata(kamus_ncbi)
+    kamus_ncbi = yield from update_kamus_pake_wikidata(kamus_ncbi, True, 30, 'disambiguation layer 1')
     #update dataframe pake kamus
-    df_node,df_edge = update_df_pake_kamus(kamus_ncbi,df_node,df_edge)
-    df_node,df_edge = update_df_pake_path_ujung(df_node,df_edge)
+    df_node,df_edge = yield from update_df_pake_kamus(kamus_ncbi,df_node,df_edge, True, 30, 'disambiguation layer 1')
+    df_node,df_edge = yield from update_df_pake_path_ujung(df_node,df_edge, True, 30, 'disambiguation layer 1')
     #tambah kolom takson pake data NCBI
     df_node = buat_kolom_taxon_awal(df_node) #buat kolom taxon, default none
     df_node = addTaxonColumn(df_node,f'{JENA_URL_MAINDB}/query') # isi pake ncbi
@@ -152,7 +145,7 @@ def praproses(virus_txt, mongodb):
         # pencarian data
         link="https://api.globalbioticinteractions.org/interaction?"+text_source_taxon+"&interactionType="+interactionType+text_target_taxon+"&fields="+(','.join(kolom))+"taxonIdPrefix=NCBI"
         print(link)
-        df_to_add = pagination_search_globi(link, df_to_add, offset_limit)
+        df_to_add = yield from pagination_search_globi(link, df_to_add, offset_limit, True, 40,'BFS plant interactions')
 
 
 
@@ -169,7 +162,7 @@ def praproses(virus_txt, mongodb):
         # pencarian data
         link="https://api.globalbioticinteractions.org/interaction?"+text_source_taxon+"&interactionType="+interactionType+"&targetTaxon=Viridiplantae"+"&fields="+(','.join(kolom))
         print(link)
-        df_to_add = pagination_search_globi(link, df_to_add, offset_limit)
+        df_to_add = yield from pagination_search_globi(link, df_to_add, offset_limit, True, 45,'BFS interactions: insect -> plant')
 
 
 
@@ -187,7 +180,7 @@ def praproses(virus_txt, mongodb):
         # pencarian data
         link="https://api.globalbioticinteractions.org/interaction?"+text_source_taxon+"&interactionType="+interactionType+"&targetTaxon=Viruses"+"&fields="+(','.join(kolom))
         print(link)
-        df_to_add = pagination_search_globi(link, df_to_add, offset_limit)
+        df_to_add = yield from pagination_search_globi(link, df_to_add, offset_limit, True, 48,'BFS interactions insects -> viruses')
 
 
 
@@ -233,10 +226,10 @@ def praproses(virus_txt, mongodb):
     yield report_back(60,'disambiguation layer 2, this will take a little time')
     # 6 disambiguasi layer 2
     kamus_ncbi = buat_kamus_kosong(node_to_add)
-    kamus_ncbi = update_kamus_pake_wikidata(kamus_ncbi)
+    kamus_ncbi = yield from update_kamus_pake_wikidata(kamus_ncbi, True, 60,'disambiguation layer 2')
     #update dataframe pake kamus
-    node_to_add,edge_to_add = update_df_pake_kamus(kamus_ncbi,node_to_add,edge_to_add)
-    node_to_add,edge_to_add = update_df_pake_path_ujung(node_to_add, edge_to_add)
+    node_to_add,edge_to_add = yield from update_df_pake_kamus(kamus_ncbi,node_to_add,edge_to_add, True, 60,'disambiguation layer 2')
+    node_to_add,edge_to_add = yield from update_df_pake_path_ujung(node_to_add, edge_to_add, True, 60,'disambiguation layer 2')
     # tambah kolom takson pake data NCBI
     node_to_add = buat_kolom_taxon_awal(node_to_add) #buat kolom taxon, isi none dan isi dari path
     node_to_add = addTaxonColumn(node_to_add,f'{JENA_URL_MAINDB}/query') #isi kolom taxon, pake NCBI

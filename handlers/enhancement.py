@@ -7,7 +7,6 @@ def get_musuh_alami_handler(search):
             'status': 404,
             'message': 'Tidak ditemukan musuh alami',
         }
-    
     return {
         'status':200,
         'message': 'Kirim json', 

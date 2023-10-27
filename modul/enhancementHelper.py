@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from SPARQLWrapper import SPARQLWrapper, JSON, N3
 from modul.disambiguation_optimized import __querying
+from modul.helper_umum import pemecah_generator
 
 JENA_URL = os.environ.get("JENA_URL")
 JENA_URL_MAINDB = os.environ.get("JENA_URL_MAINDB")
@@ -66,10 +67,10 @@ def getDFMusuhAlami(search, url_ncbi_endpoint = f'{JENA_URL_MAINDB}/query'):
 
     #5 disambiguasi layer 1 interaksi virus
     kamus_ncbi = buat_kamus_kosong(df_node)
-    kamus_ncbi = update_kamus_pake_wikidata(kamus_ncbi)
+    kamus_ncbi = pemecah_generator(update_kamus_pake_wikidata(kamus_ncbi))
     #update dataframe pake kamus
-    df_node,df_edge = update_df_pake_kamus(kamus_ncbi,df_node,df_edge)
-    df_node,df_edge = update_df_pake_path_ujung(df_node,df_edge)
+    df_node,df_edge = pemecah_generator(update_df_pake_kamus(kamus_ncbi,df_node,df_edge))
+    df_node,df_edge = pemecah_generator(update_df_pake_path_ujung(df_node,df_edge))
     #standarisasi layer 1 interaksi virus
     df_node = buat_kolom_taxon_awal(df_node) #buat kolom taxon, default none
     df_node = addTaxonColumn(df_node,url_ncbi_endpoint) # isi pake ncbi

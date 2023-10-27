@@ -1,5 +1,6 @@
 import pandas as pd
 import requests
+from modul.helper_umum import report_back
 
 # kalo ba update disini, bken juga di praproses tanaman
 def cleaning(data, dropNonNCBI=False):
@@ -188,12 +189,14 @@ def splitInteractionToNodeEdge(df):
 
 
 
-def pagination_search_globi(rawlink, df_to_concat, offset_limit=20):
+def pagination_search_globi(rawlink, df_to_concat, offset_limit=20, percent=0, title="pencarian"):
     print('mulai pencarian BFS GloBI')
     offset=0
     loop=1
     while True:
-        print('offset ke', loop, ' : ', offset)
+        message= title + ', in offset ' + str(loop) + ' : ' + str(offset) + ' rows'
+        print(message)
+        yield report_back(percent,message)
         link= rawlink + "&offset="+str(offset)
         response = requests.get(link)
         res=response.json()

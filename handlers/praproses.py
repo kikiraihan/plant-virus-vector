@@ -105,10 +105,10 @@ def praproses(virus_txt, mongodb, ncbi_server_url):
     yield report_back(30,'disambiguation layer 1 virus interactions, please wait this will take a little time')
     #3 disambiguasi layer 1 interaksi virus
     kamus_ncbi = buat_kamus_kosong(df_node)
-    kamus_ncbi = yield from update_kamus_pake_wikidata(kamus_ncbi, True, 30, 'disambiguation layer 1')
+    kamus_ncbi = yield from update_kamus_pake_wikidata(kamus_ncbi, 30, 'disambiguation layer 1')
     #update dataframe pake kamus
-    df_node,df_edge = yield from update_df_pake_kamus(kamus_ncbi,df_node,df_edge, True, 30, 'disambiguation layer 1')
-    df_node,df_edge = yield from update_df_pake_path_ujung(df_node,df_edge, True, 30, 'disambiguation layer 1')
+    df_node,df_edge = yield from update_df_pake_kamus(kamus_ncbi,df_node,df_edge, 30, 'disambiguation layer 1')
+    df_node,df_edge = yield from update_df_pake_path_ujung(df_node,df_edge, 30, 'disambiguation layer 1')
     #tambah kolom takson pake data NCBI
     df_node = buat_kolom_taxon_awal(df_node) #buat kolom taxon, default none
     df_node = addTaxonColumn(df_node,ncbi_server_url) # isi pake ncbi
@@ -223,10 +223,10 @@ def praproses(virus_txt, mongodb, ncbi_server_url):
     yield report_back(60,'disambiguation layer 2, this will take a little time')
     # 6 disambiguasi layer 2
     kamus_ncbi = buat_kamus_kosong(node_to_add)
-    kamus_ncbi = yield from update_kamus_pake_wikidata(kamus_ncbi, True, 60,'disambiguation layer 2')
+    kamus_ncbi = yield from update_kamus_pake_wikidata(kamus_ncbi, 60,'disambiguation layer 2')
     #update dataframe pake kamus
-    node_to_add,edge_to_add = yield from update_df_pake_kamus(kamus_ncbi,node_to_add,edge_to_add, True, 60,'disambiguation layer 2')
-    node_to_add,edge_to_add = yield from update_df_pake_path_ujung(node_to_add, edge_to_add, True, 60,'disambiguation layer 2')
+    node_to_add,edge_to_add = yield from update_df_pake_kamus(kamus_ncbi,node_to_add,edge_to_add, 60,'disambiguation layer 2')
+    node_to_add,edge_to_add = yield from update_df_pake_path_ujung(node_to_add, edge_to_add, 60,'disambiguation layer 2')
     # tambah kolom takson pake data NCBI
     node_to_add = buat_kolom_taxon_awal(node_to_add) #buat kolom taxon, isi none dan isi dari path
     node_to_add = addTaxonColumn(node_to_add,ncbi_server_url) #isi kolom taxon, pake NCBI

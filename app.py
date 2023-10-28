@@ -25,7 +25,13 @@ CORS(app)
 MONGDB_URL = os.environ.get("MONGDB_URL")
 JENA_URL = os.environ.get("JENA_URL")
 JENA_URL_MAINDB = os.environ.get("JENA_URL_MAINDB")
+print("\n=====================================")
+print("ENVIRONMENT VARIABLE")
 print("JENA_URL_MAINDB",JENA_URL_MAINDB)
+print("JENA_URL",JENA_URL)
+print("MONGDB_URL",MONGDB_URL)
+print("===================================== \n")
+
 
 # setup mongodb
 # app.config['SECRET_KEY'] = "86489870e181fd9be072f782b9742b8b"

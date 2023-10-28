@@ -190,6 +190,13 @@ def splitInteractionToNodeEdge(df):
 
 
 def pagination_search_globi(rawlink, df_to_concat, offset_limit=20, percent=0, title="pencarian"):
+    print('test link')
+    response = requests.get(rawlink)
+    if response.status_code != 200:
+        print('error')
+        yield report_back(percent,'error in pagination search, error code', response.status_code)
+        return df_to_concat
+
     print('mulai pencarian BFS GloBI')
     offset=0
     loop=1

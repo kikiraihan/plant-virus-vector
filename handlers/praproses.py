@@ -132,7 +132,8 @@ def praproses(virus_txt, mongodb, ncbi_server_url):
         interactionType=tipe_interaksi_tanaman
         list_source_taxon=[]
         for idx,i in tqdm(df_plant.iterrows(), total=df_plant.shape[0]):
-            search=i.taxon_name.replace(' ','%20')
+            # search=i.taxon_name.replace(' ','%20')
+            search=i.taxon_id
             list_source_taxon.append(search)
         list_source_taxon = list(set(list_source_taxon)) #unique
         text_source_taxon = "sourceTaxon=" + "&sourceTaxon=".join(list_source_taxon)
@@ -153,7 +154,8 @@ def praproses(virus_txt, mongodb, ncbi_server_url):
         interactionType = tipe_interaksi_serangga_ke_tanaman
         list_source_taxon=[]
         for idx,i in tqdm(df_insect.iterrows(), total=df_insect.shape[0]):
-            search=i.taxon_name.replace(' ','%20')
+            # search=i.taxon_name.replace(' ','%20')
+            search=i.taxon_id
             list_source_taxon.append(search)
         text_source_taxon = "sourceTaxon=" + "&sourceTaxon=".join(list_source_taxon)    
         # pencarian data
@@ -170,7 +172,8 @@ def praproses(virus_txt, mongodb, ncbi_server_url):
         interactionType = tipe_interaksi_serangga_ke_virus
         list_source_taxon=[]
         for idx,i in tqdm(df_insect.iterrows(), total=df_insect.shape[0]):
-            search=i.taxon_name.replace(' ','%20')
+            # search=i.taxon_name.replace(' ','%20')
+            search=i.taxon_id
             list_source_taxon.append(search)
         text_source_taxon = "sourceTaxon=" + "&sourceTaxon=".join(list_source_taxon)    
         print(df_insect)

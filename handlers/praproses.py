@@ -77,7 +77,7 @@ def praproses(virus_txt, mongodb, ncbi_server_url):
 
     # pencarian data
     link="https://api.globalbioticinteractions.org/interaction?"+text_source_taxon+"&interactionType="+interactionType+"&targetTaxon=Viridiplantae&targetTaxon=Insecta"+"&fields="+(','.join(kolom))
-    df = yield from pagination_search_globi(link, df_init, offset_limit, True, 10,'BFS Data virus')
+    df = yield from pagination_search_globi(link, df_init, offset_limit, 10,'BFS Data virus')
 
     yield report_back(20,'Splitting layer 1 virus interactions')
     #2 splitting layer 1 interaksi virus
@@ -142,7 +142,7 @@ def praproses(virus_txt, mongodb, ncbi_server_url):
         # pencarian data
         link="https://api.globalbioticinteractions.org/interaction?"+text_source_taxon+"&interactionType="+interactionType+text_target_taxon+"&fields="+(','.join(kolom))+"taxonIdPrefix=NCBI"
         print(link)
-        df_to_add = yield from pagination_search_globi(link, df_to_add, offset_limit, True, 40,'BFS plant interactions')
+        df_to_add = yield from pagination_search_globi(link, df_to_add, offset_limit, 40,'BFS plant interactions')
 
 
 
@@ -159,7 +159,7 @@ def praproses(virus_txt, mongodb, ncbi_server_url):
         # pencarian data
         link="https://api.globalbioticinteractions.org/interaction?"+text_source_taxon+"&interactionType="+interactionType+"&targetTaxon=Viridiplantae"+"&fields="+(','.join(kolom))
         print(link)
-        df_to_add = yield from pagination_search_globi(link, df_to_add, offset_limit, True, 45,'BFS interactions: insect -> plant')
+        df_to_add = yield from pagination_search_globi(link, df_to_add, offset_limit, 45,'BFS interactions: insect -> plant')
 
 
 
@@ -177,7 +177,7 @@ def praproses(virus_txt, mongodb, ncbi_server_url):
         # pencarian data
         link="https://api.globalbioticinteractions.org/interaction?"+text_source_taxon+"&interactionType="+interactionType+"&targetTaxon=Viruses"+"&fields="+(','.join(kolom))
         print(link)
-        df_to_add = yield from pagination_search_globi(link, df_to_add, offset_limit, True, 48,'BFS interactions insects -> viruses')
+        df_to_add = yield from pagination_search_globi(link, df_to_add, offset_limit, 48,'BFS interactions insects -> viruses')
 
 
 

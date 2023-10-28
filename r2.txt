@@ -1,5 +1,4 @@
 pymongo[srv]
-pygraphviz
 Flask-PyMongo
 flask-SSLify
 flask-cors

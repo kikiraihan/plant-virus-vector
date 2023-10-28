@@ -13,9 +13,6 @@ from modul.vectorReferenced import get_taxon_vector,cek_ncbi_id_by_wiki_id_via_s
 from handlers.praproses_dari_proses import pra_proses_dari_proses
 from datetime import datetime
 
-JENA_URL = os.environ.get("JENA_URL")
-JENA_URL_MAINDB = os.environ.get("JENA_URL_MAINDB")
-
 
 def praproses_from_cache(from_db):
     del from_db["_id"]
@@ -29,7 +26,7 @@ def praproses_from_cache(from_db):
 
     yield f'data: {(result)}\n\n'
 
-def praproses(virus_txt, mongodb):
+def praproses(virus_txt, mongodb, ncbi_server_url):
     # 0 parameter
     yield report_back(5,'parameter initiation')
     nama_file = "tes"
@@ -38,7 +35,7 @@ def praproses(virus_txt, mongodb):
     tipe_interaksi_tanaman = 'hostOf' #hasPathogen, pake relasi hostOf lebih dapat banyak relasi dari pada hasPathogen
     tipe_interaksi_serangga_ke_tanaman = 'hasHost' 
     tipe_interaksi_serangga_ke_virus = 'hostOf' 
-    ncbi_server_url = f'{JENA_URL_MAINDB}/query'
+    ncbi_server_url = ncbi_server_url
     offset_limit=50
 
     virus_search = get_taxon_vector(virus_txt,ncbi_server_url)
@@ -114,7 +111,7 @@ def praproses(virus_txt, mongodb):
     df_node,df_edge = yield from update_df_pake_path_ujung(df_node,df_edge, True, 30, 'disambiguation layer 1')
     #tambah kolom takson pake data NCBI
     df_node = buat_kolom_taxon_awal(df_node) #buat kolom taxon, default none
-    df_node = addTaxonColumn(df_node,f'{JENA_URL_MAINDB}/query') # isi pake ncbi
+    df_node = addTaxonColumn(df_node,ncbi_server_url) # isi pake ncbi
 
 
 
@@ -232,7 +229,7 @@ def praproses(virus_txt, mongodb):
     node_to_add,edge_to_add = yield from update_df_pake_path_ujung(node_to_add, edge_to_add, True, 60,'disambiguation layer 2')
     # tambah kolom takson pake data NCBI
     node_to_add = buat_kolom_taxon_awal(node_to_add) #buat kolom taxon, isi none dan isi dari path
-    node_to_add = addTaxonColumn(node_to_add,f'{JENA_URL_MAINDB}/query') #isi kolom taxon, pake NCBI
+    node_to_add = addTaxonColumn(node_to_add,ncbi_server_url) #isi kolom taxon, pake NCBI
 
 
 

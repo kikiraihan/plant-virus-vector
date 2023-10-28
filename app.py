@@ -21,13 +21,19 @@ import pandas as pd
 app = Flask(__name__)
 CORS(app)
 
+# environment variable
+MONGDB_URL = os.environ.get("MONGDB_URL")
+JENA_URL = os.environ.get("JENA_URL")
+JENA_URL_MAINDB = os.environ.get("JENA_URL_MAINDB")
+print("JENA_URL_MAINDB",JENA_URL_MAINDB)
+
 # setup mongodb
 # app.config['SECRET_KEY'] = "86489870e181fd9be072f782b9742b8b"
 # app.config['MONGO_URI'] = 
 # mongodb_client = PyMongo(app, uri="mongodb://admin:admin123@localhost:27017/?authMechanism=DEFAULT")
 # mongodb_client = PyMongo(app, uri="mongodb://localhost:27017/thesisdbmongo")
 # mongodb = mongodb_client.db
-client = MongoClient('mongodb://admin:admin123@localhost:27017/?authMechanism=DEFAULT')
+client = MongoClient(MONGDB_URL)
 mongodb = client["thesisdbmongo"]
 
 
@@ -46,11 +52,12 @@ def submit():
 
 @app.route('/praproses/<virus>')
 def praproses_endpoint(virus):
+    ncbi_server_url = f'{JENA_URL_MAINDB}/query'
     virus = virus.lower()
     hasil = mongodb.praproses.find_one({"key": virus})
     # jika tidak ada cache
     if hasil is None:
-        return Response(praproses(virus, mongodb), mimetype='text/event-stream')
+        return Response(praproses(virus, mongodb, ncbi_server_url), mimetype='text/event-stream')
     
     return Response(praproses_from_cache(hasil), mimetype='text/event-stream')
 
@@ -77,23 +84,26 @@ def visualisasi_get_embeddings_entities_and_dict_insect():
 
 @app.route('/proses/data_to_count', methods=["POST"])
 def get_data_to_count():
+    ncbi_ontology_url = f'{JENA_URL_MAINDB}/query'
     data = request.get_json()
     split_node=data['node']
     split_edge=data['edge']
     acuan_=data['acuan_']
     df_node = pd.read_json(json.dumps(split_node), orient='split')
     df_edge = pd.read_json(json.dumps(split_edge), orient='split')
-    return proses(df_node,df_edge,acuan_)
+    return proses(df_node,df_edge,acuan_, ncbi_ontology_url)
 
 @app.route('/proses/get_taxonomy_from_string', methods=["POST"])
 def get_taxonomy_from_string():
+    ncbi_ontology_url = f'{JENA_URL_MAINDB}/query'
     data = request.get_json()
     _virus = data['virus']
-    return get_taxonomy_from_string_handler(_virus)
+    return get_taxonomy_from_string_handler(_virus, ncbi_ontology_url)
 
 @app.route('/enhancement/musuh-alami/<serangga>', methods=["GET"])
 def enhancement_musuh_alami(serangga):
-    return get_musuh_alami_handler(serangga)
+    url_ncbi_endpoint = f'{JENA_URL_MAINDB}/query'
+    return get_musuh_alami_handler(serangga, url_ncbi_endpoint)
 
 @app.route('/enhancement/wd-id/<serangga>', methods=["GET"])
 def enhancement_wd_id(serangga):
@@ -113,7 +123,8 @@ def enhancement_abstract(wd_id):
 
 @app.route('/enhancement/relatives/<ncbi_taxon_id>', methods=["GET"])
 def enhancement_relatives(ncbi_taxon_id):
-    return get_relatives_handler(ncbi_taxon_id)
+    url_ncbi_endpoint = f'{JENA_URL_MAINDB}/query'
+    return get_relatives_handler(ncbi_taxon_id, url_ncbi_endpoint)
 
 
 

@@ -3,9 +3,6 @@ import os
 from SPARQLWrapper import SPARQLWrapper
 import pandas as pd
 
-JENA_URL = os.environ.get("JENA_URL")
-JENA_URL_MAINDB = os.environ.get("JENA_URL_MAINDB")
-
 def getDescendant(id_globi, endpoint_url):
 	id_ncbi=id_globi.split(':')[-1]
 	query="""
@@ -68,7 +65,11 @@ def getTaxonomy(id_globi, endpoint_url):
 	
 	return kembalian
 
-def addTaxonColumn(node, endpoint_url = f"{JENA_URL_MAINDB}/query"): # node adalah dataframe, obo adalah kelas ontology NCBI
+def addTaxonColumn(node, endpoint_url): 
+	# PARAMETER
+	# node, adalah dataframe, obo adalah kelas ontology NCBI
+	# endpoint_url, adalah url dari ncbi ontology
+	# ================================================
 	# masih per baris data
 	data={}
 	for idx,row in node[node["taxon_id"].str.contains("NCBI")].iterrows():

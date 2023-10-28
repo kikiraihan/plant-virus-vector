@@ -1,7 +1,7 @@
 from modul.enhancementHelper import getDFMusuhAlami, getWdId, getFactDict, getPicture, getAbstract, getSeranggaKerabatNCBI
 
-def get_musuh_alami_handler(search):
-    df_node, df_edge = getDFMusuhAlami(search)
+def get_musuh_alami_handler(search, url_ncbi_endpoint):
+    df_node, df_edge = getDFMusuhAlami(search, url_ncbi_endpoint)
     if(df_node is None):
         return {
             'status': 404,
@@ -71,8 +71,8 @@ def get_wd_id_handler(search):
     }
     
 
-def get_relatives_handler(taxon_id):
-    relatives = getSeranggaKerabatNCBI(taxon_id)
+def get_relatives_handler(taxon_id, url_ncbi_endpoint):
+    relatives = getSeranggaKerabatNCBI(taxon_id, url_ncbi_endpoint)
     if(relatives is None):
         return {
             'status': 404,

@@ -13,10 +13,7 @@ from SPARQLWrapper import SPARQLWrapper, JSON, N3
 from modul.disambiguation_optimized import __querying
 from modul.helper_umum import pemecah_generator
 
-JENA_URL = os.environ.get("JENA_URL")
-JENA_URL_MAINDB = os.environ.get("JENA_URL_MAINDB")
-
-def getDFMusuhAlami(search, url_ncbi_endpoint = f'{JENA_URL_MAINDB}/query'):
+def getDFMusuhAlami(search, url_ncbi_endpoint):
     # parameter
     # search --> string nama serangga: bemisia, atau kode ncbi : NCBI:7038
     # url_ncbi_endpoint='http://localhost:3030/mydataset/query' --> string url endpoint sparql ncbi
@@ -240,11 +237,11 @@ def getAbstract(wd_id):
     return hasil['results']['bindings'][0]['abstract']['value']
 
 
-def getSeranggaKerabatNCBI(taxon_id="NCBI:7038", endpoint_url = f"{JENA_URL_MAINDB}/query"):
+def getSeranggaKerabatNCBI(taxon_id, url_ncbi_endpoint):
     
     try:
-        one_level_parent=getTaxonomy(taxon_id,endpoint_url)[1][2]
-        data=getDescendant(one_level_parent, endpoint_url)
+        one_level_parent=getTaxonomy(taxon_id,url_ncbi_endpoint)[1][2]
+        data=getDescendant(one_level_parent, url_ncbi_endpoint)
         # df = pd.DataFrame(data, columns= ['Name','Taxon','Taxon ID'])
         return data
     except:

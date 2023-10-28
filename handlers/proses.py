@@ -11,13 +11,7 @@ from modul.embeddingHelper import df_serangga_to_rdf, rdf_KG_to_embeddings, df_t
 from modul.custom_degree_centrality import degree_centrality_custom
 from handlers.praproses_dari_proses import pra_proses_dari_proses
 
-JENA_URL = os.environ.get("JENA_URL")
-JENA_URL_MAINDB = os.environ.get("JENA_URL_MAINDB")
-
-print("JENA_URL_MAINDB",JENA_URL_MAINDB)
-
-def proses(df_node,df_edge,acuan_):
-    ncbi_ontology_url = f'{JENA_URL_MAINDB}/query'
+def proses(df_node,df_edge,acuan_, ncbi_ontology_url):
     df_node, df_edge = pra_proses_dari_proses(df_node, df_edge, acuan_, True)
 
     if(len(df_node[df_node['group']=="serangga"])<=2):
@@ -112,8 +106,7 @@ def proses(df_node,df_edge,acuan_):
     }
 
 
-def get_taxonomy_from_string_handler(virus_name):
-    ncbi_ontology_url = f'{JENA_URL_MAINDB}/query'
+def get_taxonomy_from_string_handler(virus_name, ncbi_ontology_url):
     print("ncbi_ontology_url : ",ncbi_ontology_url)
     data = get_taxon_vector(virus_name,ncbi_ontology_url,False)
     print('smppe disini aman')

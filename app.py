@@ -22,14 +22,14 @@ app = Flask(__name__)
 CORS(app)
 
 # environment variable
-MONGDB_URL = os.environ.get("MONGDB_URL")
+MONGODB_URL = os.environ.get("MONGODB_URL")
 JENA_URL = os.environ.get("JENA_URL")
 JENA_URL_MAINDB = os.environ.get("JENA_URL_MAINDB")
 print("\n=====================================")
 print("ENVIRONMENT VARIABLE")
 print("JENA_URL_MAINDB",JENA_URL_MAINDB)
 print("JENA_URL",JENA_URL)
-print("MONGDB_URL",MONGDB_URL)
+print("MONGODB_URL",MONGODB_URL)
 print("===================================== \n")
 
 
@@ -39,7 +39,7 @@ print("===================================== \n")
 # mongodb_client = PyMongo(app, uri="mongodb://admin:admin123@localhost:27017/?authMechanism=DEFAULT")
 # mongodb_client = PyMongo(app, uri="mongodb://localhost:27017/thesisdbmongo")
 # mongodb = mongodb_client.db
-client = MongoClient(MONGDB_URL)
+client = MongoClient(MONGODB_URL)
 mongodb = client["thesisdbmongo"]
 
 

@@ -1,7 +1,6 @@
 import requests
 from tqdm import tqdm
 import pandas as pd
-# from owlready2 import get_ontology
 import os, json
 
 from modul.standardization_usingsparql import addTaxonColumn, buat_kolom_taxon_awal
@@ -36,7 +35,8 @@ def praproses(virus_txt, mongodb, ncbi_server_url):
     tipe_interaksi_serangga_ke_tanaman = 'hasHost' 
     tipe_interaksi_serangga_ke_virus = 'hostOf' 
     ncbi_server_url = ncbi_server_url
-    offset_limit=50
+    offset_limit_pertama=30
+    offset_limit_kedua=3
 
     virus_search = get_taxon_vector(virus_txt,ncbi_server_url)
     if (virus_search==False):
@@ -77,7 +77,7 @@ def praproses(virus_txt, mongodb, ncbi_server_url):
 
     # pencarian data
     link="https://api.globalbioticinteractions.org/interaction?"+text_source_taxon+"&interactionType="+interactionType+"&targetTaxon=Viridiplantae&targetTaxon=Insecta"+"&fields="+(','.join(kolom))
-    df = yield from pagination_search_globi(link, df_init, offset_limit, 10,'BFS Data virus')
+    df = yield from pagination_search_globi(link, df_init, offset_limit_pertama, 10,'BFS Data virus')
 
     yield report_back(20,'Splitting layer 1 virus interactions')
     #2 splitting layer 1 interaksi virus
@@ -143,7 +143,7 @@ def praproses(virus_txt, mongodb, ncbi_server_url):
         # pencarian data
         link="https://api.globalbioticinteractions.org/interaction?"+text_source_taxon+"&interactionType="+interactionType+text_target_taxon+"&fields="+(','.join(kolom))+"taxonIdPrefix=NCBI"
         print(link)
-        df_to_add = yield from pagination_search_globi(link, df_to_add, offset_limit, 40,'BFS plant interactions')
+        df_to_add = yield from pagination_search_globi(link, df_to_add, offset_limit_kedua, 40,'BFS plant interactions')
 
 
 
@@ -161,7 +161,7 @@ def praproses(virus_txt, mongodb, ncbi_server_url):
         # pencarian data
         link="https://api.globalbioticinteractions.org/interaction?"+text_source_taxon+"&interactionType="+interactionType+"&targetTaxon=Viridiplantae"+"&fields="+(','.join(kolom))
         print(link)
-        df_to_add = yield from pagination_search_globi(link, df_to_add, offset_limit, 45,'BFS interactions: insect -> plant')
+        df_to_add = yield from pagination_search_globi(link, df_to_add, offset_limit_kedua, 45,'BFS interactions: insect -> plant')
 
 
 
@@ -180,7 +180,7 @@ def praproses(virus_txt, mongodb, ncbi_server_url):
         # pencarian data
         link="https://api.globalbioticinteractions.org/interaction?"+text_source_taxon+"&interactionType="+interactionType+"&targetTaxon=Viruses"+"&fields="+(','.join(kolom))
         print(link)
-        df_to_add = yield from pagination_search_globi(link, df_to_add, offset_limit, 48,'BFS interactions insects -> viruses')
+        df_to_add = yield from pagination_search_globi(link, df_to_add, offset_limit_kedua, 48,'BFS interactions insects -> viruses')
 
 
 

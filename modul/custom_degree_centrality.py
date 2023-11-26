@@ -73,8 +73,12 @@ def degree_centrality_custom(G,virus_utama_ids,serangga_ids, print_relasi=True):
     
     node_data = G.nodes(data=True)
 
-    s = 1.0 / (len(G) - 1.0)
-    # reset_n=(len(G.nodes)-1)/(len([node for node, data in G.nodes(data=True) if data.get('group') == "serangga"])-1)
+    # asli
+    # s = 1.0 / (len(G) - 1.0)
+    # ketika pakai serangga sebagai pembagi
+    # s =(len(G.nodes)-1)/(len([node for node, data in G.nodes(data=True) if data.get('group') == "serangga"])-1)
+    # pembaruan karena ada bobot juga
+    s = 1.0 / ( ((len(G) - 1.0)**2) * len(G) )
     # kalo pake serangga sebagai pembagi
 
     centrality = {}

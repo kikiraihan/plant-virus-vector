@@ -12,3 +12,6 @@ venv*
 [Dd]my*
 .env
 .DS_Store
+
+pyproject.toml
+poetry.lock

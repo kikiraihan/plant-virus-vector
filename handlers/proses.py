@@ -109,7 +109,6 @@ def proses(df_node,df_edge,acuan_, ncbi_ontology_url):
 def get_taxonomy_from_string_handler(virus_name, ncbi_ontology_url):
     print("ncbi_ontology_url : ",ncbi_ontology_url)
     data = get_taxon_vector(virus_name,ncbi_ontology_url,False)
-    print('smppe disini aman')
     if data == False:
         return {
             'status': '404',

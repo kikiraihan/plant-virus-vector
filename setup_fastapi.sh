@@ -17,7 +17,15 @@ source $venv_dir/bin/activate
 sudo apt update
 sudo apt-get install -y graphviz graphviz-dev
 
-./poetry_install_requirements.sh
+# install requirement pakai poetry
+while IFS= read -r line || [ -n "$line" ]; do
+    poetry add "$line"
+done < requirements_slim.txt
+
+# hapus baris pyrdf2vec/__init__.py
+# /app/venv3114/lib/python3.10/site-packages/pyrdf2vec/__init__.py
+echo "hapus baris nest_asyncio.apply() pyrdf2vec/__init__.py"
+sed -i 's/^.*nest_asyncio.apply()/# &/' /app/venv3114/lib/python3.11/site-packages/pyrdf2vec/__init__.py
 
 # Run the application
 uvicorn app_fastapi:app --host 0.0.0.0 --port 8009 --reload --log-level debug | tee -a dmy-api.log

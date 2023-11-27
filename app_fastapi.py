@@ -9,7 +9,7 @@ import pandas as pd
 import json
 import os
 import asyncio
-import uvicorn
+import time
 
 from handlers.praproses import praproses, praproses_from_cache
 from handlers.proses import proses, get_taxonomy_from_string_handler
@@ -46,6 +46,24 @@ def read_root():
 @app.post("/submit")
 def read_item():
     return {"message": "Hello, this is a test for a POST request"}
+
+# Asynchronous endpoint using async/await
+@app.get("/async_example/{name}")
+def read_item(name: str):
+    # Simulate an asynchronous operation, such as fetching data from a database
+    # fake_async_result = await simulate_async_operation(name)
+    time.sleep(5)
+    
+    # Return the result
+    return {"message": f"Hello, {name}!"}
+
+# Simulated asynchronous operation
+async def simulate_async_operation(name: str):
+    # Simulate an asynchronous operation (e.g., fetching data from a database)
+    await asyncio.sleep(5)
+    
+    # Return a result
+    return f"This is a result for {name}"
 
 @app.get('/praproses/{virus}')
 async def praproses_endpoint(virus: str):
@@ -120,4 +138,5 @@ def enhancement_relatives(ncbi_taxon_id: str):
 # Add other routes for enhancements...
 
 if __name__ == "__main__":
+    import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8009, log_level="info")

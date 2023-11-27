@@ -1,5 +1,7 @@
 # plant-virus-vector
-this a backend code for [Vektorpedia](https://vektorpedia.ipb.ac.id), an insect vector search engine. This project is connected to [jeki_repo](https://github.com/adibenc/jeki) as the dockerize bundle with frontend.
+This is jupyter notebook collections and backend codes for [Vektorpedia](https://vektorpedia.ipb.ac.id), an insect vector search engine based on knowledge graph analysis based.
+
+This repo is connected to dockerize repo [jeki](https://github.com/adibenc/jeki) as backend service container. This repo can be cloned to jeki/src.
 
 # instalation
 - create venv3114 in this root folder

@@ -1,10 +1,5 @@
 # plant-virus-vector
-
-init
-```
-python3 -m venv venv
-```
-
+this a backend code for [Vektorpedia](https://vektorpedia.ipb.ac.id), an insect vector search engine. This project is connected to [jeki_repo](https://github.com/adibenc/jeki) as the dockerize bundle with frontend.
 
 # instalation
 - create venv3114 in this root folder
@@ -32,6 +27,5 @@ poetry init
 - certificate_ssl
 - venv3114
 
-
 # about .env
-diserver tidak pakai file .env, tapi pakai env yang ada di docker-compose.yml nya
+*di server tidak pakai file .env, tapi pakai env yang ada di docker-compose.yml nya.

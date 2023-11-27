@@ -20,7 +20,7 @@ sudo apt-get install -y graphviz graphviz-dev
 # install requirement pakai poetry
 while IFS= read -r line || [ -n "$line" ]; do
     poetry add "$line"
-done < requirements_slim.txt
+done < requirements_fastapi.txt
 
 # hapus baris pyrdf2vec/__init__.py
 # /app/venv3114/lib/python3.10/site-packages/pyrdf2vec/__init__.py

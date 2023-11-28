@@ -6,10 +6,10 @@ umap-learn
 SPARQLWrapper
 jcopml
 plotly
+pygraphviz
 pandas
 numpy
 scipy
-pygraphviz
 matplotlib
 fastapi
 uvicorn[standard]

@@ -3,17 +3,17 @@ from SPARQLWrapper import SPARQLWrapper
 import requests
 
 # pencarian ID berdasarkan nama entity
-def get_wiki_id_by_name_api(item):
+def get_wiki_id_by_name_api(param_string):
   try:
-    url = f"https://www.wikidata.org/w/api.php?action=wbsearchentities&search={item}&language=en&format=json"
+    url = f"https://www.wikidata.org/w/api.php?action=wbsearchentities&search={param_string}&language=en&format=json"
     data = requests.get(url).json()
     # Return the first id (Could upgrade this in the future)
     return data['search'][0]['id']
   except:
     return False
 
-def cek_ncbi_id_by_wiki_id_via_string(acuan_):    
-    id_=get_wiki_id_by_name_api(acuan_)
+def cek_ncbi_id_by_wiki_id_via_string(param_string):    
+    id_=get_wiki_id_by_name_api(param_string)
     if not id_:
         return False
     
@@ -53,14 +53,14 @@ def cek_ncbi_id_by_wiki_id_via_string(acuan_):
 
 
 # untuk vector
-def get_taxon_vector(acuan_, endpoint_url, taxon_indonesia=True):
+def get_taxon_vector(param_string, endpoint_url, taxon_indonesia=True):
     # input 
     # acuan_ = 'Aphididae' (string)
     # endpoint_url = 'https://localhost:3030/mydatabase/query' (string) --> ncbi_ontology_url 
     # taxon_indonesia = True (boolean)
     # output
     # [('family', 'NCBI:27482_Aphididae'), ...]
-    cek = cek_ncbi_id_by_wiki_id_via_string(acuan_) #(Aphididae, family, NCBI:27482)
+    cek = cek_ncbi_id_by_wiki_id_via_string(param_string) #(Aphididae, family, NCBI:27482)
     if not cek:
         return False
 

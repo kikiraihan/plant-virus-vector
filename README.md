@@ -35,7 +35,7 @@ local instalation can use pyproject.toml
 uvicorn app_fastapi:app --host 0.0.0.0 --port 8009 --reload --log-level debug;
 ```
 
-## Required folder ignored from git
+## Required folder in server (ignored from git)
 - certificate_ssl
 - venv3114
 

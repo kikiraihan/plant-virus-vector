@@ -188,15 +188,27 @@ def splitInteractionToNodeEdge(df):
     return df_node,df_edge
 
 
-
-def pagination_search_globi(rawlink, df_to_concat, offset_limit=20, percent=0, title="pencarian"):
+def test_pagination_link(rawlink, percent=0):
     print('test link')
     response = requests.get(rawlink)
-    if response.status_code != 200:
-        print('error')
-        yield report_back(percent,'error in pagination search, error code', response.status_code)
-        return df_to_concat
+    if response.status_code == 200:
+        yield report_back(percent,'test link pagination search success, code ' + str(response.status_code))
+        return 'aman'
+    elif response.status_code != 414:
+        yield report_back(percent,'error Request-URI Too Large, error code' + str(response.status_code))
+        return 'pecah'
+    else:
+        yield report_back(percent,'error in pagination search, error code ' + str(response.status_code))
+        return 'skip'
 
+def pagination_search_globi(rawlink, df_to_concat, offset_limit=20, percent=0, title="pencarian"):
+    # print('test link')
+    # response = requests.get(rawlink)
+    # if response.status_code != 200:
+    #     print('error')
+    #     yield report_back(percent,'error in pagination search, error code ' + response.status_code)
+    #     return df_to_concat
+    
     print('mulai pencarian BFS GloBI')
     offset=0
     loop=1
